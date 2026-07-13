@@ -13,6 +13,5 @@
     </div>
   </div>
 </div>
-
-<script src="[% PLUGIN_PATH %]/dist/fsrecordmetadata.js"></script>
+<script src="/api/v1/contrib/bywatersolutions_fsrecordmetadataplugin/static/dist/fsrecordmetadata.js"></script>
 [% INCLUDE 'intranet-bottom.inc' %]
