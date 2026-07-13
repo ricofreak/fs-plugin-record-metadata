@@ -1,0 +1,18 @@
+[% INCLUDE 'doc-head-open.inc' %]
+<title>Koha: FS Record Metadata</title>
+[% INCLUDE 'doc-head-close.inc' %]
+</head>
+<body id="fs_record_metadata" class="plugin">
+[% INCLUDE 'header.inc' %]
+[% INCLUDE 'cat-search.inc' %]
+
+<div class="main container-fluid">
+  <div class="row">
+    <div class="col-md-12">
+      <div id="fs-record-metadata-app"></div>
+    </div>
+  </div>
+</div>
+
+<script src="[% PLUGIN_PATH %]/dist/fsrecordmetadata.js"></script>
+[% INCLUDE 'intranet-bottom.inc' %]

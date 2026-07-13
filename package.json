@@ -1,0 +1,24 @@
+{
+  "name": "plugins",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "build": "webpack",
+    "watch": "webpack --watch"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "vue": "^3.5.39"
+  },
+  "devDependencies": {
+    "@vue/compiler-sfc": "^3.5.39",
+    "css-loader": "^7.1.4",
+    "style-loader": "^4.0.0",
+    "vue-loader": "^17.4.2",
+    "webpack": "^5.108.4",
+    "webpack-cli": "^7.2.1"
+  }
+}

@@ -45,6 +45,15 @@ sub uninstall {
     return 1;
 }
 
+sub tool {
+    my ( $self, $args ) = @_;
+    my $cgi = $self->{cgi};
+
+    my $template = $self->get_template({ file => 'tool.tt' });
+
+    $self->output_html( $template->output() );
+}
+
 sub static_routes {
     my ( $self, $args ) = @_;
 
