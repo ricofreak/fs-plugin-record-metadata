@@ -5,7 +5,7 @@ const webpack = require('webpack')
 module.exports = {
   entry: './src/main.js',
   output: {
-    path: path.resolve(__dirname, './Koha/Plugin/Com/ByWaterSolutions/fs_record_metadata_plugin/dist/'),
+    path: path.resolve(__dirname, './Koha/Plugin/Com/ByWaterSolutions/FSRecordMetadata/dist/'),
     filename: 'fsrecordmetadata.js'
   },
   mode: 'production',

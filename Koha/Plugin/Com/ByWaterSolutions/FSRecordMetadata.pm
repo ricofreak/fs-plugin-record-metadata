@@ -1,0 +1,111 @@
+package Koha::Plugin::Com::ByWaterSolutions::FSRecordMetadata;
+
+use Modern::Perl;
+
+use base qw(Koha::Plugins::Base);
+use JSON;
+
+use C4::Installer qw(TableExists);
+
+our $VERSION = "0.0.1";
+
+our $metadata = {
+    name             => 'Family Search Record Metadata Plugin',
+    author           => 'Lucas Gass',
+    description      => 'Family Search Koha Record Metadata plugin',
+    date_authored    => '2026-07-13',
+    date_updated     => '2026-07-13',
+    minimum_version  => '25.1100000',
+    maximum_version  => '25.1199000',
+    version          => $VERSION,
+};
+
+sub new {
+    my ( $class, $args ) = @_;
+
+    $args->{'metadata'} = $metadata;
+    my $self = $class->SUPER::new($args);
+
+    return $self;
+}
+
+sub install {
+    my ( $self, $args ) = @_;
+    my $dbh = C4::Context->dbh;
+
+    my $entries_table = $self->get_qualified_table_name('entries');
+    unless ( TableExists($entries_table) ) {
+        $dbh->do("
+            CREATE TABLE `$entries_table` (
+                entry_id      INT(11) NOT NULL AUTO_INCREMENT,
+                biblionumber  INT(11) NOT NULL,
+                itemnumber    INT(11) NULL,
+                dtn           VARCHAR(32) NULL,
+                title_author  VARCHAR(255) NULL,
+                callnumber    VARCHAR(255) NULL,
+                barcode       VARCHAR(20) NULL,
+                problem       TEXT NULL,
+                access        VARCHAR(80) NULL, -- FS_ACCESS authorised value
+                md            TINYINT(1) NOT NULL DEFAULT 0,
+                audit1        TINYINT(1) NOT NULL DEFAULT 0,
+                audit2        TINYINT(1) NOT NULL DEFAULT 0,
+                ocr           TINYINT(1) NOT NULL DEFAULT 0,
+                published     TINYINT(1) NOT NULL DEFAULT 0,
+                online_review TINYINT(1) NOT NULL DEFAULT 0,
+                created_on    TIMESTAMP NOT NULL DEFAULT current_timestamp(),
+                created_user  INT(11) NULL,
+                updated_on    TIMESTAMP NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+                updated_user  INT(11) NULL,
+                PRIMARY KEY (`entry_id`),
+                INDEX (`biblionumber`),
+                CONSTRAINT `fs_record_metadata_entries_ibfk_1` FOREIGN KEY (`biblionumber`)
+                    REFERENCES `biblio` (`biblionumber`) ON DELETE CASCADE ON UPDATE CASCADE
+            ) ENGINE = INNODB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+        ");
+    }
+    return 1;
+}
+
+sub upgrade {
+    my ( $self, $args ) = @_;
+
+    return 1;
+}
+
+sub uninstall {
+    my ( $self, $args ) = @_;
+
+    return 1;
+}
+
+sub tool {
+    my ( $self, $args ) = @_;
+    my $cgi = $self->{cgi};
+
+    my $template = $self->get_template({ file => 'tool.tt' });
+
+    $self->output_html( $template->output() );
+}
+
+sub static_routes {
+    my ( $self, $args ) = @_;
+
+    my $spec_str = $self->mbf_read('staticapi.json');
+    my $spec     = decode_json($spec_str);
+
+    return $spec;
+}
+
+sub api_namespace {
+    my ($self) = @_;
+    return 'fsrecordmetadata';
+}
+
+sub intranet_head {
+    my ( $self ) = @_;
+
+    return q|
+   <script src="/api/v1/contrib/bywatersolutions_fsrecordmetadataplugin/static/js/fsrecordmetadataplugin.js" type="module"></script>
+   <link rel="stylesheet" href="/api/v1/contrib/bywatersolutions_fsrecordmetadataplugin/static/css/fsrecordmetadataplugin.css">
+|;
+}

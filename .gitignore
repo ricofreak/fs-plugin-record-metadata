@@ -1,4 +1,4 @@
 *.kpz
 .DS_Store
 node_modules/
-Koha/Plugin/Com/ByWaterSolutions/fs_record_metadata_plugin/dist/
+Koha/Plugin/Com/ByWaterSolutions/FSRecordMetadata/dist/
