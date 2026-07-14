@@ -1,3 +1,6 @@
+[% USE raw %]
+[% USE Asset %]
+[% USE Koha %]
 [% INCLUDE 'doc-head-open.inc' %]
 <title>Koha: FS Record Metadata</title>
 [% INCLUDE 'doc-head-close.inc' %]
@@ -6,10 +9,21 @@
 [% INCLUDE 'header.inc' %]
 [% INCLUDE 'cat-search.inc' %]
 
+[% PROCESS 'html_helpers.inc' %]
+
+[% WRAPPER breadcrumbs %]
+    [% WRAPPER breadcrumb_item %]
+        <a href="/cgi-bin/koha/plugins/plugins-home.pl">Plugins</a>
+    [% END %]
+    [% WRAPPER breadcrumb_item bc_active = 1 %]
+        <span>Record Metadata Plugin</span>
+    [% END %]
+[% END %]
+
 <div class="main container-fluid">
   <div class="row">
     <div class="col-md-12">
-      <div id="fs-record-metadata-app"></div>
+      <div id="__app"></div>
     </div>
   </div>
 </div>

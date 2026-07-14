@@ -1,4 +1,10 @@
-import { createApp } from 'vue'
-import App from './App.vue'
+import { createApp } from "vue"
 
-createApp(App).mount('#fs-record-metadata-app')
+import NavBar from "./components/NavBar.vue"
+import App from "./components/Main.vue"
+
+const app = createApp(App)
+
+app.component('NavBar', NavBar)
+
+app.mount("#__app")
