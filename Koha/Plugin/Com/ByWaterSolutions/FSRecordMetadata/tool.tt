@@ -19,7 +19,9 @@
         <span>Record Metadata Plugin</span>
     [% END %]
 [% END %]
-
+<script>
+  window.fsrmPermissions = { canEdit: [% can_edit %] === 1 };
+</script>
 <div class="main container-fluid">
   <div class="row">
     <div class="col-md-12">

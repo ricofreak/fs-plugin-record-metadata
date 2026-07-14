@@ -6,6 +6,7 @@ use base qw(Koha::Plugins::Base);
 use JSON;
 
 use C4::Installer qw(TableExists);
+use C4::Auth   qw( haspermission );
 
 our $VERSION = "0.0.1";
 
@@ -83,6 +84,11 @@ sub tool {
     my $cgi = $self->{cgi};
 
     my $template = $self->get_template({ file => 'tool.tt' });
+
+    my $userid = C4::Context->userenv ? C4::Context->userenv->{id} : undef;
+    my $can_edit = $userid && haspermission( $userid, { editcatalogue => 'edit_catalogue' } ) ? 1 : 0;
+
+    $template->param( can_edit => $can_edit );
 
     $self->output_html( $template->output() );
 }

@@ -15,15 +15,17 @@ export default {
     current: { type: String, required: true },
   },
   emits: ['navigate'],
-  data() {
-    return {
-      items: [
-        { id: 'search',  label: 'Search' },
-        { id: 'create',  label: 'New entry' },
-        { id: 'reports', label: 'Reports' },
-      ],
-    };
+  computed: {
+  items() {
+    const all = [
+      { id: 'search',  label: 'Search' },
+      { id: 'create',  label: 'New entry', requires: 'canEdit' },
+      { id: 'reports', label: 'Reports' },
+    ];
+    const perms = window.fsrmPermissions || {};
+    return all.filter(i => !i.requires || perms[i.requires]);
   },
+},
 };
 </script>
 

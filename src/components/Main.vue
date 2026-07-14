@@ -5,8 +5,9 @@
     <NavBar :current="view" @navigate="view = $event" />
 
     <SearchView v-if="view === 'search'" />
-    <p v-else-if="view === 'create'">New entry form goes here.</p>
+    <p v-else-if="view === 'create' && canEdit">New entry form goes here.</p>
     <p v-else-if="view === 'reports'">Reports go here.</p>
+    <p v-else>You don't have permission to view this page.</p>
 
   </div>
 </template>
@@ -20,14 +21,14 @@ export default {
   data() {
     return { view: 'search' };
   },
+  computed: {
+    canEdit() {
+      return (window.fsrmPermissions || {}).canEdit === true;
+    },
+  },
 };
 </script>
 
 <style>
 .fs-record-metadata { padding: 1rem; }
-.fsrm-search { display: flex; gap: .5rem; margin-bottom: 1rem; }
-.fsrm-error { color: #b00; }
-.fsrm-results { border-collapse: collapse; width: 100%; }
-.fsrm-results th, .fsrm-results td { border: 1px solid #ccc; padding: .4rem .6rem; text-align: left; }
 </style>
-
