@@ -19,6 +19,20 @@
                     "description": "Filter by barcode",
                     "required": false,
                     "type": "string"
+                },
+                {
+                    "name": "_page",
+                    "in": "query",
+                    "description": "Page number",
+                    "required": false,
+                    "type": "integer"
+                },
+                {
+                    "name": "_per_page",
+                    "in": "query",
+                    "description": "Results per page",
+                    "required": false,
+                    "type": "integer"
                 }
             ],
             "responses": {

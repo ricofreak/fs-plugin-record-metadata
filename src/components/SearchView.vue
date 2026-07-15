@@ -1,58 +1,51 @@
 <template>
-    <div>
-        <form @submit.prevent="search" class="fsrm-search">
-          <select v-model="searchType">
-            <option value="biblionumber">TN (biblionumber)</option>
-            <option value="barcode">Barcode</option>
-          </select>
-          <input v-model.trim="searchTerm" :placeholder="placeholder" />
-          <button type="submit" :disabled="!searchTerm || loading">
-            {{ loading ? 'Searching…' : 'Search' }}
-          </button>
-        </form>
+  <div>
+    <form @submit.prevent="runSearch" class="fsrm-search">
+      <select v-model="searchType">
+        <option value="biblionumber">TN (biblionumber)</option>
+        <option value="barcode">Barcode</option>
+      </select>
+      <input v-model.trim="searchTerm" :placeholder="placeholder" />
+      <button type="submit" :disabled="!searchTerm">Search</button>
+    </form>
 
-        <p v-if="error" class="fsrm-error">{{ error }}</p>
+    <p v-if="error" class="fsrm-error">{{ error }}</p>
 
-        <table v-if="searched && entries.length" class="fsrm-results">
-          <thead>
-            <tr>
-              <th>Entry</th>
-              <th>TN</th>
-              <th>DTN</th>
-              <th>Title/Author</th>
-              <th>Barcode</th>
-              <th>Call number</th>
-              <th>Published</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="e in entries" :key="e.entry_id">
-              <td>{{ e.entry_id }}</td>
-              <td>{{ e.biblionumber }}</td>
-              <td>{{ e.dtn }}</td>
-              <td>{{ e.title_author }}</td>
-              <td>{{ e.barcode }}</td>
-              <td>{{ e.callnumber }}</td>
-              <td>{{ e.published ? 'Yes' : 'No' }}</td>
-            </tr>
-          </tbody>
-        </table>
-
-        <p v-else-if="searched && !loading && !error">No entries found.</p>
-    </div>
+    <DataTable
+      v-if="activeSearch"
+      :key="tableKey"
+      :options="tableOptions"
+      class="display"
+      width="100%"
+    >
+      <thead>
+        <tr>
+          <th>Entry</th><th>TN</th><th>DTN</th><th>Title/Author</th>
+          <th>Barcode</th><th>Call number</th><th>Published</th>
+        </tr>
+      </thead>
+    </DataTable>
+  </div>
 </template>
+
 <script>
+import DataTable from 'datatables.net-vue3';
+import DataTablesCore from 'datatables.net-dt';
+import 'datatables.net-dt/css/dataTables.dataTables.min.css';
+
+DataTable.use(DataTablesCore);
+
 const API_BASE = '/api/v1/contrib/fsrecordmetadata';
 
 export default {
-  name: 'App',
+  name: 'SearchView',
+  components: { DataTable },
   data() {
     return {
       searchType: 'biblionumber',
       searchTerm: '',
-      entries: [],
-      searched: false,
-      loading: false,
+      activeSearch: null,   // frozen copy of the submitted search
+      tableKey: 0,
       error: null,
     };
   },
@@ -60,29 +53,62 @@ export default {
     placeholder() {
       return this.searchType === 'biblionumber' ? 'e.g. 1234' : 'e.g. 39999000001234';
     },
+    tableOptions() {
+      const search = this.activeSearch;
+      const setError = (msg) => { this.error = msg; };
+      return {
+        serverSide: true,
+        processing: true,
+        searching: false,   // our form is the search; hide DT's own box
+        pageLength: 50,
+        lengthMenu: [25, 50, 100],
+        ordering: false,    // server orders by entry_id DESC; per-column sort is a later increment
+        ajax: async (data, callback) => {
+          try {
+            const page = Math.floor(data.start / data.length) + 1;
+            const params = new URLSearchParams({
+              [search.type]: search.term,
+              _page: page,
+              _per_page: data.length,
+            });
+            const res = await fetch(`${API_BASE}/entries?${params}`, {
+              headers: { Accept: 'application/json' },
+              credentials: 'same-origin',
+            });
+            if (!res.ok) {
+              const body = await res.json().catch(() => ({}));
+              throw new Error(body.error || `Search failed (${res.status})`);
+            }
+            const total = parseInt(res.headers.get('X-Total-Count') || '0', 10);
+            const rows = await res.json();
+            callback({
+              draw: data.draw,
+              data: rows,
+              recordsTotal: total,
+              recordsFiltered: total,
+            });
+          } catch (e) {
+            setError(e.message);
+            callback({ draw: data.draw, data: [], recordsTotal: 0, recordsFiltered: 0 });
+          }
+        },
+        columns: [
+          { data: 'entry_id' },
+          { data: 'biblionumber' },
+          { data: 'dtn', defaultContent: '' },
+          { data: 'title_author', defaultContent: '' },
+          { data: 'barcode', defaultContent: '' },
+          { data: 'callnumber', defaultContent: '' },
+          { data: 'published', render: (d) => (d ? 'Yes' : 'No') },
+        ],
+      };
+    },
   },
   methods: {
-    async search() {
-      this.loading = true;
+    runSearch() {
       this.error = null;
-      this.entries = [];
-      try {
-        const params = new URLSearchParams({ [this.searchType]: this.searchTerm });
-        const res = await fetch(`${API_BASE}/entries?${params}`, {
-          headers: { Accept: 'application/json' },
-          credentials: 'same-origin',
-        });
-        if (!res.ok) {
-          const body = await res.json().catch(() => ({}));
-          throw new Error(body.error || `Search failed (${res.status})`);
-        }
-        this.entries = await res.json();
-      } catch (e) {
-        this.error = e.message;
-      } finally {
-        this.searched = true;
-        this.loading = false;
-      }
+      this.activeSearch = { type: this.searchType, term: this.searchTerm };
+      this.tableKey += 1;   // remount the table so a new search starts at page 1
     },
   },
 };
@@ -91,6 +117,4 @@ export default {
 <style>
 .fsrm-search { display: flex; gap: .5rem; margin-bottom: 1rem; }
 .fsrm-error { color: #b00; }
-.fsrm-results { border-collapse: collapse; width: 100%; }
-.fsrm-results th, .fsrm-results td { border: 1px solid #ccc; padding: .4rem .6rem; text-align: left; }
 </style>

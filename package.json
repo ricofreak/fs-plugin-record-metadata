@@ -11,6 +11,8 @@
   "license": "ISC",
   "description": "",
   "dependencies": {
+    "datatables.net-dt": "^2.3.8",
+    "datatables.net-vue3": "^3.0.7",
     "vue": "^3.5.39"
   },
   "devDependencies": {

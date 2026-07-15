@@ -93,6 +93,39 @@ sub tool {
     $self->output_html( $template->output() );
 }
 
+sub search_entries {
+    my ( $self, $filters, $opts ) = @_;
+    $opts //= {};
+    my $page     = $opts->{page}     || 1;
+    my $per_page = $opts->{per_page} || 50;
+    $per_page = 100 if $per_page > 100;
+    $page = 1 if $page < 1;
+
+    my $table = $self->get_qualified_table_name('entries');
+    my $dbh   = C4::Context->dbh;
+
+    my ( @where, @binds );
+    for my $col (qw( biblionumber barcode entry_id )) {
+        if ( defined $filters->{$col} ) {
+            push @where, "$col = ?";
+            push @binds, $filters->{$col};
+        }
+    }
+    my $where = @where ? 'WHERE ' . join( ' AND ', @where ) : '';
+
+    my ($total) = $dbh->selectrow_array(
+        "SELECT COUNT(*) FROM `$table` $where", undef, @binds );
+
+    my $offset = ( $page - 1 ) * $per_page;
+    my $rows   = $dbh->selectall_arrayref(
+        "SELECT * FROM `$table` $where ORDER BY entry_id DESC LIMIT ? OFFSET ?",
+        { Slice => {} },
+        @binds, $per_page, $offset
+    );
+
+    return { entries => $rows, total => $total };
+}
+
 sub static_routes {
     my ( $self, $args ) = @_;
 
@@ -116,11 +149,3 @@ sub api_routes {
     return $spec;
 }
 
-sub intranet_head {
-    my ( $self ) = @_;
-
-    return q|
-   <script src="/api/v1/contrib/bywatersolutions_fsrecordmetadataplugin/static/js/fsrecordmetadataplugin.js" type="module"></script>
-   <link rel="stylesheet" href="/api/v1/contrib/bywatersolutions_fsrecordmetadataplugin/static/css/fsrecordmetadataplugin.css">
-|;
-}
