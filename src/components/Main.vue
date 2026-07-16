@@ -5,7 +5,7 @@
     <NavBar :current="view" @navigate="view = $event" />
 
     <SearchView v-if="view === 'search'" />
-    <p v-else-if="view === 'create' && canEdit">New entry form goes here.</p>
+    <NewEntry v-else-if="view === 'create' && canEdit" @saved="view = 'search'" @cancel="view = 'search'" />
     <p v-else-if="view === 'reports'">Reports go here.</p>
     <p v-else>You don't have permission to view this page.</p>
 
@@ -14,10 +14,11 @@
 
 <script>
 import SearchView from './SearchView.vue';
+import NewEntry from './NewEntry.vue';
 
 export default {
   name: 'Main',
-  components: { SearchView },
+  components: { SearchView, NewEntry },
   data() {
     return { view: 'search' };
   },
