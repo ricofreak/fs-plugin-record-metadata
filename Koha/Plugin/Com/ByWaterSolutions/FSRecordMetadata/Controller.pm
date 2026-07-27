@@ -2,6 +2,7 @@ package Koha::Plugin::Com::ByWaterSolutions::FSRecordMetadata::Controller;
 
 use Modern::Perl;
 use Mojo::Base 'Mojolicious::Controller';
+use Mojo::JSON qw(true false);
 
 use C4::Context;
 use Koha::Plugin::Com::ByWaterSolutions::FSRecordMetadata;
@@ -41,6 +42,35 @@ sub list_entries {
     };
 }
 
+sub lookup_record {
+    my $c = shift->openapi->valid_input or return;
+
+    my $biblionumber = $c->validation->param('biblionumber');
+    my $barcode      = $c->validation->param('barcode');
+
+    unless ( defined $biblionumber || defined $barcode ) {
+        return $c->render( status => 400,
+            openapi => { error => "Provide biblionumber or barcode" } );
+    }
+
+    return try {
+        my $plugin = Koha::Plugin::Com::ByWaterSolutions::FSRecordMetadata->new;
+        my $details = $plugin->get_record_details(
+            { biblionumber => $biblionumber, barcode => $barcode } );
+
+        unless ($details) {
+            return $c->render( status => 404,
+                openapi => { error => "Record not found" } );
+        }
+
+        return $c->render( status => 200, openapi => $details );
+    }
+    catch {
+        return $c->render( status => 500,
+            openapi => { error => "Something went wrong: $_" } );
+    };
+}
+
 sub create_entry {
     my $c = shift->openapi->valid_input or return;
 
@@ -67,6 +97,26 @@ sub create_entry {
             status  => 500,
             openapi => { error => "Something went wrong: $_" }
         );
+    };
+}
+
+sub check_dtn {
+    my $c = shift->openapi->valid_input or return;
+
+    my $dtn = $c->validation->param('dtn');
+
+    return try {
+        my $plugin = Koha::Plugin::Com::ByWaterSolutions::FSRecordMetadata->new;
+        my $result = $plugin->search_entries( { dtn => $dtn } );
+
+        return $c->render(
+            status  => 200,
+            openapi => { dtn => $dtn, available => ( $result->{total} ? false : true ) }
+        );
+    }
+    catch {
+        return $c->render( status => 500,
+            openapi => { error => "Something went wrong: $_" } );
     };
 }
 

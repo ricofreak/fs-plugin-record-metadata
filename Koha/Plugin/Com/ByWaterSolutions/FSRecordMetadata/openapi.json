@@ -135,5 +135,83 @@
                 "permissions": { "editcatalogue": "edit_catalogue" }
             }
         }
+    },
+    "/lookup": {
+        "get": {
+            "x-mojo-to": "Com::ByWaterSolutions::FSRecordMetadata::Controller#lookup_record",
+            "operationId": "fsrmLookupRecord",
+            "tags": ["fsrecordmetadata"],
+            "produces": ["application/json"],
+            "parameters": [
+                {
+                    "name": "biblionumber",
+                    "in": "query",
+                    "required": false,
+                    "type": "integer"
+                },
+                {
+                    "name": "barcode",
+                    "in": "query",
+                    "required": false,
+                    "type": "string"
+                }
+            ],
+            "responses": {
+                "200": {
+                    "description": "Record details",
+                    "schema": { "type": "object" }
+                },
+                "400": {
+                    "description": "Missing search parameter",
+                    "schema": { "type": "object", "properties": { "error": { "type": "string" } } }
+                },
+                "404": {
+                    "description": "Record not found",
+                    "schema": { "type": "object", "properties": { "error": { "type": "string" } } }
+                },
+                "500": {
+                    "description": "Internal server error",
+                    "schema": { "type": "object", "properties": { "error": { "type": "string" } } }
+                }
+            },
+            "x-koha-authorization": {
+                "permissions": { "catalogue": "1" }
+            }
+        }
+    },
+    "/entries/check-dtn": {
+        "get": {
+            "x-mojo-to": "Com::ByWaterSolutions::FSRecordMetadata::Controller#check_dtn",
+            "operationId": "fsrmCheckDtn",
+            "tags": ["fsrecordmetadata"],
+            "produces": ["application/json"],
+            "parameters": [
+                {
+                    "name": "dtn",
+                    "in": "query",
+                    "required": true,
+                    "type": "string"
+                }
+            ],
+            "responses": {
+                "200": {
+                    "description": "Availability of the DTN",
+                    "schema": {
+                        "type": "object",
+                        "properties": {
+                            "dtn": { "type": "string" },
+                            "available": { "type": "boolean" }
+                        }
+                    }
+                },
+                "500": {
+                    "description": "Internal server error",
+                    "schema": { "type": "object", "properties": { "error": { "type": "string" } } }
+                }
+            },
+            "x-koha-authorization": {
+                "permissions": { "catalogue": "1" }
+            }
+        }
     }
 }

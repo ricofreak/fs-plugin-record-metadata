@@ -181,6 +181,72 @@ sub create_entry {
     return $dbh->last_insert_id( undef, undef, $table, undef );
 }
 
+sub get_record_details {
+    my ( $self, $params ) = @_;
+
+    my $biblio;
+    my @items;
+
+    if ( $params->{barcode} ) {
+        my $item = Koha::Items->find( { barcode => $params->{barcode} } );
+        return unless $item;
+        $biblio = $item->biblio;
+        @items  = ($item);
+    }
+    elsif ( $params->{biblionumber} ) {
+        $biblio = Koha::Biblios->find( $params->{biblionumber} );
+        return unless $biblio;
+        @items = $biblio->items->as_list;
+    }
+    else {
+        return;
+    }
+
+    my $record = $biblio->metadata->record;
+
+    my $title = '';
+    if ( my $f245 = $record->field('245') ) {
+        $title = join ' ', grep { defined && length }
+            ( $f245->subfield('a'), $f245->subfield('b'), $f245->subfield('p') );
+    }
+
+    my @authors;
+    for my $tag (qw( 100 110 111 700 710 711 )) {
+        for my $field ( $record->field($tag) ) {
+            my $a = $field->subfield('a');
+            push @authors, $a if defined $a && length $a;
+        }
+    }
+
+    my $pub_date = '';
+    for my $tag (qw( 260 264 )) {
+        for my $field ( $record->field($tag) ) {
+            my $c = $field->subfield('c');
+            if ( defined $c && length $c ) { $pub_date = $c; last; }
+        }
+        last if length $pub_date;
+    }
+
+    return {
+        biblionumber     => $biblio->biblionumber,
+        title            => $title,
+        author           => join( '; ', @authors ),
+        publication_date => $pub_date,
+        items            => [
+            map {
+                {
+                    itemnumber => $_->itemnumber,
+                    barcode    => $_->barcode,
+                    callnumber => $_->itemcallnumber,
+                    itemtype   => $_->effective_itemtype,
+                    homebranch => $_->homebranch,
+                    branchname => $_->home_branch ? $_->home_branch->branchname : undef,
+                }
+            } @items
+        ],
+    };
+}
+
 sub static_routes {
     my ( $self, $args ) = @_;
 
