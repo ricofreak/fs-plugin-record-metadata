@@ -42,9 +42,6 @@ sub install {
                 biblionumber  INT(11) NOT NULL,
                 itemnumber    INT(11) NULL,
                 dtn           VARCHAR(32) NULL,
-                title_author  VARCHAR(255) NULL,
-                callnumber    VARCHAR(255) NULL,
-                barcode       VARCHAR(20) NULL,
                 problem       TEXT NULL,
                 access        VARCHAR(80) NULL, -- FS_ACCESS authorised value
                 md            TINYINT(1) NOT NULL DEFAULT 0,
@@ -59,6 +56,7 @@ sub install {
                 updated_user  INT(11) NULL,
                 PRIMARY KEY (`entry_id`),
                 INDEX (`biblionumber`),
+                INDEX (`dtn`),
                 CONSTRAINT `fs_record_metadata_entries_ibfk_1` FOREIGN KEY (`biblionumber`)
                     REFERENCES `biblio` (`biblionumber`) ON DELETE CASCADE ON UPDATE CASCADE
             ) ENGINE = INNODB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -96,34 +94,91 @@ sub tool {
 sub search_entries {
     my ( $self, $filters, $opts ) = @_;
     $opts //= {};
+
     my $page     = $opts->{page}     || 1;
     my $per_page = $opts->{per_page} || 50;
     $per_page = 100 if $per_page > 100;
-    $page = 1 if $page < 1;
+    $page     = 1   if $page < 1;
 
     my $table = $self->get_qualified_table_name('entries');
     my $dbh   = C4::Context->dbh;
 
+    my %columns = (
+        entry_id     => 'e.entry_id',
+        biblionumber => 'e.biblionumber',
+        itemnumber   => 'e.itemnumber',
+        dtn          => 'e.dtn',
+        barcode      => 'i.barcode',
+    );
+
     my ( @where, @binds );
-    for my $col (qw( biblionumber barcode entry_id )) {
-        if ( defined $filters->{$col} ) {
-            push @where, "$col = ?";
-            push @binds, $filters->{$col};
-        }
+    for my $key ( keys %columns ) {
+        next unless defined $filters->{$key};
+        push @where, "$columns{$key} = ?";
+        push @binds, $filters->{$key};
     }
     my $where = @where ? 'WHERE ' . join( ' AND ', @where ) : '';
 
-    my ($total) = $dbh->selectrow_array(
-        "SELECT COUNT(*) FROM `$table` $where", undef, @binds );
+    my $from = qq{
+        FROM `$table` e
+        JOIN biblio b ON b.biblionumber = e.biblionumber
+        LEFT JOIN items i ON i.itemnumber = e.itemnumber
+        $where
+    };
+
+    my ($total) = $dbh->selectrow_array( "SELECT COUNT(*) $from", undef, @binds );
 
     my $offset = ( $page - 1 ) * $per_page;
     my $rows   = $dbh->selectall_arrayref(
-        "SELECT * FROM `$table` $where ORDER BY entry_id DESC LIMIT ? OFFSET ?",
+        qq{
+            SELECT e.*,
+                   b.title,
+                   b.author,
+                   i.barcode,
+                   i.itemcallnumber
+            $from
+            ORDER BY e.entry_id DESC
+            LIMIT ? OFFSET ?
+        },
         { Slice => {} },
         @binds, $per_page, $offset
     );
 
     return { entries => $rows, total => $total };
+}
+
+sub create_entry {
+    my ( $self, $params ) = @_;
+
+    my $table = $self->get_qualified_table_name('entries');
+    my $dbh   = C4::Context->dbh;
+
+    my $userenv = C4::Context->userenv;
+    my $user_id = $userenv ? $userenv->{number} : undef;
+
+    my @cols = qw( biblionumber itemnumber dtn problem access
+                   md audit1 audit2 ocr published online_review );
+
+    my ( @names, @placeholders, @binds );
+    for my $col (@cols) {
+        next unless exists $params->{$col};
+        push @names,        $col;
+        push @placeholders, '?';
+        push @binds,        $params->{$col};
+    }
+
+    push @names, 'created_user', 'updated_user';
+    push @placeholders, '?', '?';
+    push @binds, $user_id, $user_id;
+
+    my $sql = sprintf(
+        "INSERT INTO `%s` (%s) VALUES (%s)",
+        $table, join( ', ', @names ), join( ', ', @placeholders )
+    );
+
+    $dbh->do( $sql, undef, @binds );
+
+    return $dbh->last_insert_id( undef, undef, $table, undef );
 }
 
 sub static_routes {

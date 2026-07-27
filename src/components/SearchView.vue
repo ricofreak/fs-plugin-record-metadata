@@ -20,8 +20,21 @@
     >
       <thead>
         <tr>
-          <th>Entry</th><th>TN</th><th>DTN</th><th>Title/Author</th>
-          <th>Barcode</th><th>Call number</th><th>Published</th>
+          <th>Problems</th>
+          <th>TN</th>
+          <th>DTN</th>
+          <th>Title/Author</th>
+          <th>Item</th>
+          <th>Access</th>
+          <th>Call #</th>
+          <th>Barcode</th>
+          <th>MD</th>
+          <th>Scan</th>
+          <th>A1</th>
+          <th>A2</th>
+          <th>OCR</th>
+          <th>Pub</th>
+          <th>OR</th>
         </tr>
       </thead>
     </DataTable>
@@ -97,9 +110,17 @@ export default {
           { data: 'biblionumber' },
           { data: 'dtn', defaultContent: '' },
           { data: 'title_author', defaultContent: '' },
-          { data: 'barcode', defaultContent: '' },
+          { data: 'item_type', defaultContent: '' },
+          { data: 'access', defaultContent: '' },
           { data: 'callnumber', defaultContent: '' },
+          { data: 'barcode', defaultContent: '' },
+          { data: 'md', defaultContent: '' },
+          { data: 'scan', defaultContent: '' },
+          { data: 'a1', defaultContent: '' },
+          { data: 'a2', defaultContent: '' },
+          { data: 'orc', defaultContent: '' },
           { data: 'published', render: (d) => (d ? 'Yes' : 'No') },
+          { data: 'or', defaultContent: '' },
         ],
       };
     },

@@ -38,19 +38,101 @@
             "responses": {
                 "200": {
                     "description": "A list of entries",
-                    "schema": { "type": "array", "items": { "type": "object" } }
+                    "schema": {
+                        "type": "array",
+                        "items": { "type": "object" }
+                    }
                 },
                 "400": {
                     "description": "Missing search parameter",
-                    "schema": { "type": "object", "properties": { "error": { "type": "string" } } }
+                    "schema": {
+                        "type": "object",
+                        "properties": {
+                            "error": { "type": "string" }
+                        }
+                    }
                 },
                 "500": {
                     "description": "Internal server error",
-                    "schema": { "type": "object", "properties": { "error": { "type": "string" } } }
+                    "schema": {
+                        "type": "object",
+                        "properties": {
+                            "error": { "type": "string" }
+                        }
+                    }
                 }
             },
             "x-koha-authorization": {
                 "permissions": { "catalogue": "1" }
+            }
+        },
+        "post": {
+            "x-mojo-to": "Com::ByWaterSolutions::FSRecordMetadata::Controller#create_entry",
+            "operationId": "fsrmCreateEntry",
+            "tags": ["fsrecordmetadata"],
+            "consumes": ["application/json"],
+            "produces": ["application/json"],
+            "parameters": [
+                {
+                    "name": "body",
+                    "in": "body",
+                    "description": "The entry to create",
+                    "required": true,
+                    "schema": {
+                        "type": "object",
+                        "properties": {
+                            "biblionumber":  { "type": "integer" },
+                            "itemnumber":    { "type": ["integer", "null"] },
+                            "dtn":           { "type": ["string", "null"] },
+                            "problem":       { "type": ["string", "null"] },
+                            "access":        { "type": ["string", "null"] },
+                            "md":            { "type": "integer" },
+                            "audit1":        { "type": "integer" },
+                            "audit2":        { "type": "integer" },
+                            "ocr":           { "type": "integer" },
+                            "published":     { "type": "integer" },
+                            "online_review": { "type": "integer" }
+                        },
+                        "required": ["biblionumber"],
+                        "additionalProperties": false
+                    }
+                }
+            ],
+            "responses": {
+                "201": {
+                    "description": "Entry created",
+                    "schema": { "type": "object" }
+                },
+                "400": {
+                    "description": "Bad request",
+                    "schema": {
+                        "type": "object",
+                        "properties": {
+                            "error": { "type": "string" }
+                        }
+                    }
+                },
+                "404": {
+                    "description": "Biblio not found",
+                    "schema": {
+                        "type": "object",
+                        "properties": {
+                            "error": { "type": "string" }
+                        }
+                    }
+                },
+                "500": {
+                    "description": "Internal server error",
+                    "schema": {
+                        "type": "object",
+                        "properties": {
+                            "error": { "type": "string" }
+                        }
+                    }
+                }
+            },
+            "x-koha-authorization": {
+                "permissions": { "editcatalogue": "edit_catalogue" }
             }
         }
     }

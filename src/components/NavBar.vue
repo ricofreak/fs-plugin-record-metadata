@@ -19,8 +19,11 @@ export default {
   items() {
     const all = [
       { id: 'search',  label: 'Search' },
-      { id: 'create',  label: 'New entry', requires: 'canEdit' },
-      { id: 'reports', label: 'Reports' },
+      { id: 'new',  label: 'New +' },
+      { id: 'create',  label: 'Scnanning/Processing', requires: 'canEdit' },
+      { id: 'problems', label: 'Problems' },
+      { id: 'reports', label: 'Queues/Reports' },
+      { id: 'admin', label: 'Admin' },
     ];
     const perms = window.fsrmPermissions || {};
     return all.filter(i => !i.requires || perms[i.requires]);
