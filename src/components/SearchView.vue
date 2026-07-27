@@ -28,13 +28,13 @@
           <th>Access</th>
           <th>Call #</th>
           <th>Barcode</th>
-          <th>MD</th>
-          <th>Scan</th>
-          <th>A1</th>
-          <th>A2</th>
-          <th>OCR</th>
-          <th>Pub</th>
-          <th>OR</th>
+          <th title="Metadata">MD</th>
+          <th title="Scanned">Scan</th>
+          <th title="Audit1">A1</th>
+          <th title="Audit2">A2</th>
+          <th title="OCR">OCR</th>
+          <th title="Published date">Pub</th>
+          <th title="Online review">OR</th>
         </tr>
       </thead>
     </DataTable>
@@ -106,14 +106,17 @@ export default {
           }
         },
         columns: [
-          { data: 'entry_id' },
+          { data: 'problem' },
           { data: 'biblionumber' },
           { data: 'dtn', defaultContent: '' },
-          { data: 'title_author', defaultContent: '' },
-          { data: 'item_type', defaultContent: '' },
+          {
+            data: null,
+            render: (row) => [row.title, row.author].filter(Boolean).join(' / '),
+          },
+          { data: 'itypes', defaultContent: '' },
           { data: 'access', defaultContent: '' },
           { data: 'callnumber', defaultContent: '' },
-          { data: 'barcode', defaultContent: '' },
+          { data: 'barcodes', defaultContent: '' },
           { data: 'md', defaultContent: '' },
           { data: 'scan', defaultContent: '' },
           { data: 'a1', defaultContent: '' },

@@ -201,7 +201,6 @@ export default {
       try {
         const payload = {
           biblionumber: this.record.biblionumber,
-          itemnumber: this.selectedItemnumber,
           dtn: this.dtn || null,
           access: this.entry.access || null,
           problem: this.entry.problem || null,

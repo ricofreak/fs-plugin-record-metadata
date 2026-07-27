@@ -40,7 +40,6 @@ sub install {
             CREATE TABLE `$entries_table` (
                 entry_id      INT(11) NOT NULL AUTO_INCREMENT,
                 biblionumber  INT(11) NOT NULL,
-                itemnumber    INT(11) NULL,
                 dtn           VARCHAR(32) NULL,
                 problem       TEXT NULL,
                 access        VARCHAR(80) NULL, -- FS_ACCESS authorised value
@@ -106,9 +105,7 @@ sub search_entries {
     my %columns = (
         entry_id     => 'e.entry_id',
         biblionumber => 'e.biblionumber',
-        itemnumber   => 'e.itemnumber',
         dtn          => 'e.dtn',
-        barcode      => 'i.barcode',
     );
 
     my ( @where, @binds );
@@ -117,25 +114,33 @@ sub search_entries {
         push @where, "$columns{$key} = ?";
         push @binds, $filters->{$key};
     }
+    if ( defined $filters->{barcode} ) {
+        push @where,
+            'e.biblionumber IN (SELECT i.biblionumber FROM items i WHERE i.barcode = ?)';
+        push @binds, $filters->{barcode};
+    }
     my $where = @where ? 'WHERE ' . join( ' AND ', @where ) : '';
 
     my $from = qq{
         FROM `$table` e
         JOIN biblio b ON b.biblionumber = e.biblionumber
-        LEFT JOIN items i ON i.itemnumber = e.itemnumber
         $where
     };
 
     my ($total) = $dbh->selectrow_array( "SELECT COUNT(*) $from", undef, @binds );
 
     my $offset = ( $page - 1 ) * $per_page;
-    my $rows   = $dbh->selectall_arrayref(
+    my $rows = $dbh->selectall_arrayref(
         qq{
             SELECT e.*,
                    b.title,
                    b.author,
-                   i.barcode,
-                   i.itemcallnumber
+                   (SELECT GROUP_CONCAT(i.barcode ORDER BY i.barcode SEPARATOR ', ')
+                    FROM items i WHERE i.biblionumber = e.biblionumber) AS barcodes,
+                   (SELECT GROUP_CONCAT(DISTINCT i.itemcallnumber SEPARATOR ', ')
+                    FROM items i WHERE i.biblionumber = e.biblionumber) AS callnumbers,
+                   (SELECT GROUP_CONCAT(DISTINCT i.itype SEPARATOR ', ')
+                    FROM items i WHERE i.biblionumber = e.biblionumber) AS itypes
             $from
             ORDER BY e.entry_id DESC
             LIMIT ? OFFSET ?
