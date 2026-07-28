@@ -20,9 +20,9 @@ export default {
     const all = [
       { id: 'search',  label: 'Search' },
       { id: 'new',  label: 'New +' },
-      { id: 'create',  label: 'Scnanning/Processing', requires: 'canEdit' },
+      { id: 'create',  label: 'Scanning/processing', requires: 'canEdit' },
       { id: 'problems', label: 'Problems' },
-      { id: 'reports', label: 'Queues/Reports' },
+      { id: 'reports', label: 'Queues/reports' },
       { id: 'admin', label: 'Admin' },
     ];
     const perms = window.fsrmPermissions || {};

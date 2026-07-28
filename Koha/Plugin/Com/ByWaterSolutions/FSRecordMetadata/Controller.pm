@@ -100,6 +100,30 @@ sub create_entry {
     };
 }
 
+sub update_entry {
+    my $c = shift->openapi->valid_input or return;
+
+    my $entry_id = $c->validation->param('entry_id');
+    my $body     = $c->validation->param('body');
+
+    return try {
+        my $plugin   = Koha::Plugin::Com::ByWaterSolutions::FSRecordMetadata->new;
+        my $existing = $plugin->search_entries( { entry_id => $entry_id } );
+
+        unless ( $existing->{total} ) {
+            return $c->render( status => 404, openapi => { error => "Entry not found" } );
+        }
+
+        $plugin->update_entry( $entry_id, $body );
+
+        my $updated = $plugin->search_entries( { entry_id => $entry_id } );
+        return $c->render( status => 200, openapi => $updated->{entries}->[0] );
+    }
+    catch {
+        return $c->render( status => 500, openapi => { error => "Something went wrong: $_" } );
+    };
+}
+
 sub check_dtn {
     my $c = shift->openapi->valid_input or return;
 

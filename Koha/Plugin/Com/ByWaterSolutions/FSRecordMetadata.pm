@@ -186,6 +186,34 @@ sub create_entry {
     return $dbh->last_insert_id( undef, undef, $table, undef );
 }
 
+sub update_entry {
+    my ( $self, $entry_id, $params ) = @_;
+
+    my $table = $self->get_qualified_table_name('entries');
+    my $dbh   = C4::Context->dbh;
+
+    my $userenv = C4::Context->userenv;
+    my $user_id = $userenv ? $userenv->{number} : undef;
+
+    my @cols = qw( problem access md audit1 audit2 ocr published online_review );
+
+    my ( @sets, @binds );
+    for my $col (@cols) {
+        next unless exists $params->{$col};
+        push @sets,  "$col = ?";
+        push @binds, $params->{$col};
+    }
+
+    return 0 unless @sets;
+
+    push @sets,  'updated_user = ?';
+    push @binds, $user_id;
+
+    my $sql = sprintf( "UPDATE `%s` SET %s WHERE entry_id = ?", $table, join( ', ', @sets ) );
+
+    return $dbh->do( $sql, undef, @binds, $entry_id );
+}
+
 sub get_record_details {
     my ( $self, $params ) = @_;
 
@@ -232,11 +260,25 @@ sub get_record_details {
         last if length $pub_date;
     }
 
+    my @online_links;
+    for my $field ( $record->field('856') ) {
+        my $url = $field->subfield('u');
+        next unless defined $url && length $url;
+        my $label = $field->subfield('y')      # link text
+                 // $field->subfield('3')      # materials specified
+                 // $field->subfield('z');     # public note
+        push @online_links, {
+            url   => $url,
+            label => ( defined $label && length $label ) ? $label : $url,
+        };
+    }
+
     return {
         biblionumber     => $biblio->biblionumber,
         title            => $title,
         author           => join( '; ', @authors ),
         publication_date => $pub_date,
+        online_links     => \@online_links,
         items            => [
             map {
                 {

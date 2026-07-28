@@ -5,8 +5,8 @@
         <option value="biblionumber">TN (biblionumber)</option>
         <option value="barcode">Barcode</option>
       </select>
-      <input v-model.trim="searchTerm" :placeholder="placeholder" />
-      <button type="submit" :disabled="!searchTerm">Search</button>
+      <input v-model.trim="searchTerm" placeholder="Search for an entry" />
+      <button type="submit" class="btn btn-primary" :disabled="!searchTerm">Search</button>
     </form>
 
     <p v-if="error" class="fsrm-error">{{ error }}</p>
@@ -20,14 +20,14 @@
     >
       <thead>
         <tr>
-          <th>Problems</th>
-          <th>TN</th>
-          <th>DTN</th>
-          <th>Title/Author</th>
-          <th>Item</th>
-          <th>Access</th>
-          <th>Call #</th>
-          <th>Barcode</th>
+          <th title="problems">Problems</th>
+          <th title="Title number">TN</th>
+          <th title="Digital title number">DTN</th>
+          <th title="Title and author">Title/Author</th>
+          <th title="Item type">Item type</th>
+          <th title="Digital access">Access</th>
+          <th title="Call number">Call #</th>
+          <th title="Item barcode">Barcode</th>
           <th title="Metadata">MD</th>
           <th title="Scanned">Scan</th>
           <th title="Audit1">A1</th>
@@ -50,6 +50,11 @@ DataTable.use(DataTablesCore);
 
 const API_BASE = '/api/v1/contrib/fsrecordmetadata';
 
+const iconToggle = (d) =>
+  d
+    ? '<i class="fa fa-check fsrm-flag-yes" aria-hidden="true"></i>'
+    : '<i class="fa fa-times fsrm-flag-no" aria-hidden="true"></i>';
+
 export default {
   name: 'SearchView',
   components: { DataTable },
@@ -63,9 +68,6 @@ export default {
     };
   },
   computed: {
-    placeholder() {
-      return this.searchType === 'biblionumber' ? 'e.g. 1234' : 'e.g. 39999000001234';
-    },
     tableOptions() {
       const search = this.activeSearch;
       const setError = (msg) => { this.error = msg; };
@@ -117,13 +119,13 @@ export default {
           { data: 'access', defaultContent: '' },
           { data: 'callnumber', defaultContent: '' },
           { data: 'barcodes', defaultContent: '' },
-          { data: 'md', defaultContent: '' },
-          { data: 'scan', defaultContent: '' },
-          { data: 'a1', defaultContent: '' },
-          { data: 'a2', defaultContent: '' },
-          { data: 'orc', defaultContent: '' },
-          { data: 'published', render: (d) => (d ? 'Yes' : 'No') },
-          { data: 'or', defaultContent: '' },
+          { data: 'md', render: iconToggle },
+          { data: 'scan', render: iconToggle },
+          { data: 'a1', render: iconToggle },
+          { data: 'a2', render: iconToggle },
+          { data: 'orc', render: iconToggle },
+          { data: 'published', render: iconToggle },
+          { data: 'or', render: iconToggle },
         ],
       };
     },
@@ -139,6 +141,10 @@ export default {
 </script>
 
 <style>
+.fsrm-saved { margin-left: 1rem; color: #418940; }
 .fsrm-search { display: flex; gap: .5rem; margin-bottom: 1rem; }
 .fsrm-error { color: #b00; }
+.fsrm-flag-yes { color: #418940; font-weight: bold; }
+.fsrm-flag-no  { color: #c00; }
+td.fsrm-flag-col { text-align: center; }
 </style>

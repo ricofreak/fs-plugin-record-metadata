@@ -3,18 +3,18 @@
     <NavBar :current="view" @navigate="view = $event" />
     <SearchView v-if="view === 'search'" />
     <CreateView v-if="view === 'new'" />
-    <NewEntry v-if="view === 'create' && canEdit" @saved="view = 'search'" @cancel="view = 'search'" />
+    <ScanningViewOne v-if="view === 'create' && canEdit" @saved="view = 'search'" @cancel="view = 'search'" />
   </div>
 </template>
 
 <script>
 import SearchView from './SearchView.vue';
 import CreateView from './CreateView.vue';
-import NewEntry from './NewEntry.vue';
+import ScanningViewOne from './ScanningViewOne.vue';
 
 export default {
   name: 'Main',
-  components: { SearchView, NewEntry, CreateView },
+  components: { SearchView, CreateView, ScanningViewOne },
   data() {
     return { view: 'search' };
   },

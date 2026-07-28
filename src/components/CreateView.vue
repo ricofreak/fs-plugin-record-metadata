@@ -16,12 +16,28 @@
     <div v-if="record">
       <h2>Results</h2>
       <fieldset class="rows results">
-        <ol>
-          <li><span class="label">Title:</span> {{ record.title }}</li>
-          <li><span class="label">Author:</span> {{ record.author }}</li>
-          <li><span class="label">Publisher Date:</span> {{ record.publication_date }}</li>
-        </ol>
-        <table class="fsrm-items" v-if="record.items.length">
+        <div>
+            <ol>
+              <li><span class="label">Title:</span> {{ record.title }}</li>
+              <li><span class="label">Author:</span> {{ record.author }}</li>
+              <li><span class="label">Publisher Date:</span> {{ record.publication_date }}</li>
+            </ol>
+            <table class="table table-success table-responsive" v-if="record.online_links && record.online_links.length">
+                <thead>
+                    <tr>
+                        <th>Online link</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr v-for="(link, idx) in record.online_links" :key="idx">
+                        <td>
+                            <a :href="link.url" target="_blank" rel="noopener">{{ link.url }}</a>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        <table class="fsrm-items table table-success table-responsive" v-if="record.items.length">
           <thead>
             <tr>
               <th>Item type</th>
@@ -232,5 +248,5 @@ export default {
 
 <style>
 .fsrm-saved { margin-left: 1rem; color: #418940; }
-.results {display: grid; grid-template-columns: 1fr 1fr;}
+.results {display: grid; grid-template-columns: 1fr 1fr; grid-gap: 2em;}
 </style>

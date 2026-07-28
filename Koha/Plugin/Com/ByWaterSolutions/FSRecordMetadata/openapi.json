@@ -135,6 +135,51 @@
             }
         }
     },
+    "/entries/{entry_id}": {
+        "put": {
+            "x-mojo-to": "Com::ByWaterSolutions::FSRecordMetadata::Controller#update_entry",
+            "operationId": "fsrmUpdateEntry",
+            "tags": ["fsrecordmetadata"],
+            "consumes": ["application/json"],
+            "produces": ["application/json"],
+            "parameters": [
+                {
+                    "name": "entry_id",
+                    "in": "path",
+                    "required": true,
+                    "type": "integer"
+                },
+                {
+                    "name": "body",
+                    "in": "body",
+                    "required": true,
+                    "schema": {
+                        "type": "object",
+                        "properties": {
+                            "problem":       { "type": ["string", "null"] },
+                            "access":        { "type": ["string", "null"] },
+                            "md":            { "type": "integer" },
+                            "audit1":        { "type": "integer" },
+                            "audit2":        { "type": "integer" },
+                            "ocr":           { "type": "integer" },
+                            "published":     { "type": "integer" },
+                            "online_review": { "type": "integer" }
+                        },
+                        "additionalProperties": false
+                    }
+                }
+            ],
+            "responses": {
+                "200": { "description": "Entry updated", "schema": { "type": "object" } },
+                "400": { "description": "Bad request", "schema": { "type": "object", "properties": { "error": { "type": "string" } } } },
+                "404": { "description": "Entry not found", "schema": { "type": "object", "properties": { "error": { "type": "string" } } } },
+                "500": { "description": "Internal server error", "schema": { "type": "object", "properties": { "error": { "type": "string" } } } }
+            },
+            "x-koha-authorization": {
+                "permissions": { "editcatalogue": "edit_catalogue" }
+            }
+        }
+    },
     "/lookup": {
         "get": {
             "x-mojo-to": "Com::ByWaterSolutions::FSRecordMetadata::Controller#lookup_record",
