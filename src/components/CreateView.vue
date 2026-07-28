@@ -14,9 +14,9 @@
     <p v-if="error" class="fsrm-error">{{ error }}</p>
 
     <div v-if="record">
-      <h2>Results</h2>
       <fieldset class="rows results">
         <div>
+            <h3>Bibliographic info.</h3>
             <ol>
               <li><span class="label">Title:</span> {{ record.title }}</li>
               <li><span class="label">Author:</span> {{ record.author }}</li>
@@ -36,31 +36,52 @@
                     </tr>
                 </tbody>
             </table>
+            <table class="table table-success table-responsive">
+                <thead>
+                    <tr>
+                        <th>Privacy (998$f)</th>
+                        <th>Contract (542$r)</th>
+                        <th>Ex 108 (506$a)</th>
+                        <th>Copyright (542$l)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>{{ record.privacy_998f }}</td>
+                        <td>{{ record.contract_542r }}</td>
+                        <td>{{ record.ex_108 }}</td>
+                        <td>{{ record.copyright_542l }}</td>
+                    </tr>
+                </tbody>
+            </table>
         </div>
-        <table class="fsrm-items table table-success table-responsive" v-if="record.items.length">
-          <thead>
-            <tr>
-              <th>Item type</th>
-              <th>Home library</th>
-              <th>Call number</th>
-              <th>Barcode</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr
-              v-for="i in record.items"
-              :key="i.itemnumber"
-              :class="{ selected: i.itemnumber === selectedItemnumber }"
-              @click="selectedItemnumber = i.itemnumber"
-            >
-              <td>{{ i.itemtype }}</td>
-              <td>{{ i.branchname || i.homebranch }}</td>
-              <td>{{ i.callnumber }}</td>
-              <td>{{ i.barcode }}</td>
-            </tr>
-          </tbody>
-        </table>
-        <p v-else><em>No items attached to this record.</em></p>
+        <div>
+            <h3>Item info.</h3>
+            <table class="fsrm-items table table-success table-responsive" v-if="record.items.length">
+              <thead>
+                <tr>
+                  <th>Item type</th>
+                  <th>Home library</th>
+                  <th>Call number</th>
+                  <th>Barcode</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr
+                  v-for="i in record.items"
+                  :key="i.itemnumber"
+                  :class="{ selected: i.itemnumber === selectedItemnumber }"
+                  @click="selectedItemnumber = i.itemnumber"
+                >
+                  <td>{{ i.itemtype }}</td>
+                  <td>{{ i.branchname || i.homebranch }}</td>
+                  <td>{{ i.callnumber }}</td>
+                  <td>{{ i.barcode }}</td>
+                </tr>
+              </tbody>
+            </table>
+            <p v-else><em>No items attached to this record.</em></p>
+        </div>
       </fieldset>
         <h2>Details</h2>
         <fieldset class="rows results">

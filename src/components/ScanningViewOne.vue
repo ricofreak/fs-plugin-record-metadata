@@ -41,7 +41,7 @@
     </table>
 
     <div v-if="selected">
-      <h2>Processing — {{ selected.dtn }}</h2>
+      <h2>DTN: {{ selected.dtn }}</h2>
 
       <fieldset class="rows">
         <ol>
@@ -55,6 +55,10 @@
       <fieldset class="rows">
         <legend>Processing status</legend>
         <ol>
+          <li>
+            <label for="access">Digital title number:</label>
+            <input id="dtn" v-model.trim="form.access" />
+          </li>
           <li>
             <label for="access">Access:</label>
             <input id="access" v-model.trim="form.access" />

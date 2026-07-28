@@ -218,38 +218,26 @@ sub get_record_details {
     my ( $self, $params ) = @_;
 
     my $biblio;
-    my @items;
 
     if ( $params->{barcode} ) {
         my $item = Koha::Items->find( { barcode => $params->{barcode} } );
         return unless $item;
         $biblio = $item->biblio;
-        @items  = ($item);
     }
     elsif ( $params->{biblionumber} ) {
         $biblio = Koha::Biblios->find( $params->{biblionumber} );
-        return unless $biblio;
-        @items = $biblio->items->as_list;
     }
-    else {
-        return;
-    }
+    
+    return unless $biblio;
 
+    my @items = $biblio->items->as_list;
     my $record = $biblio->metadata->record;
 
-    my $title = '';
-    if ( my $f245 = $record->field('245') ) {
-        $title = join ' ', grep { defined && length }
-            ( $f245->subfield('a'), $f245->subfield('b'), $f245->subfield('p') );
-    }
+   my $title = join ' ', grep { defined && length }
+   ( $biblio->title, $biblio->medium, $biblio->subtitle,
+     $biblio->part_number, $biblio->part_name );
 
-    my @authors;
-    for my $tag (qw( 100 110 111 700 710 711 )) {
-        for my $field ( $record->field($tag) ) {
-            my $a = $field->subfield('a');
-            push @authors, $a if defined $a && length $a;
-        }
-    }
+    my $author = $biblio->author;
 
     my $pub_date = '';
     for my $tag (qw( 260 264 )) {
@@ -273,10 +261,29 @@ sub get_record_details {
         };
     }
 
+    my %marc_fields = (
+        privacy_998f      => [ '998', 'f' ],
+        contract_542r  => [ '542', 'r' ],
+        ex_108    => [ '506', 'a' ],
+        copyright_542l  => [ '542', 'l' ],
+    );
+
+    my %extra;
+    for my $key ( keys %marc_fields ) {
+        my ( $tag, $sub ) = @{ $marc_fields{$key} };
+        my @values;
+        for my $field ( $record->field($tag) ) {
+            for my $value ( $field->subfield($sub) ) {
+                push @values, $value if defined $value && length $value;
+            }
+        }
+        $extra{$key} = join '; ', @values;
+    }
+
     return {
         biblionumber     => $biblio->biblionumber,
         title            => $title,
-        author           => join( '; ', @authors ),
+        author           => $author,
         publication_date => $pub_date,
         online_links     => \@online_links,
         items            => [
@@ -291,6 +298,7 @@ sub get_record_details {
                 }
             } @items
         ],
+        %extra,
     };
 }
 
