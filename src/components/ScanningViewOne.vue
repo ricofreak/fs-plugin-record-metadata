@@ -13,32 +13,34 @@
 
     <p v-if="error" class="fsrm-error">{{ error }}</p>
     <p v-if="searched && !entries.length && !loading">No entries found. Create one first.</p>
-
-    <table v-if="entries.length" class="fsrm-items table table-success table-responsive">
-      <thead>
-        <tr>
-          <th></th>
-          <th>DTN</th>
-          <th>TN</th>
-          <th>Title</th>
-          <th>Access</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr
-          v-for="e in entries"
-          :key="e.entry_id"
-          :class="{ selected: selected && e.entry_id === selected.entry_id }"
-          @click="select(e)"
-        >
-          <td><input type="radio" :value="e.entry_id" :checked="selected && selected.entry_id === e.entry_id" /></td>
-          <td>{{ e.dtn }}</td>
-          <td>{{ e.biblionumber }}</td>
-          <td>{{ e.title }}</td>
-          <td>{{ e.access }}</td>
-        </tr>
-      </tbody>
-    </table>
+    <fieldset v-if="entries.length">
+        <h2>Entries</h2>
+        <table class="fsrm-items table table-success table-responsive">
+          <thead>
+            <tr>
+              <th></th>
+              <th>DTN</th>
+              <th>TN</th>
+              <th>Title</th>
+              <th>Access</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr
+              v-for="e in entries"
+              :key="e.entry_id"
+              :class="{ selected: selected && e.entry_id === selected.entry_id }"
+              @click="select(e)"
+            >
+              <td><input type="radio" :value="e.entry_id" :checked="selected && selected.entry_id === e.entry_id" /></td>
+              <td>{{ e.dtn }}</td>
+              <td>{{ e.biblionumber }}</td>
+              <td>{{ e.title }}</td>
+              <td>{{ e.access }}</td>
+            </tr>
+          </tbody>
+        </table>
+    </fieldset>
 
     <div v-if="selected">
       <h2>DTN: {{ selected.dtn }}</h2>
