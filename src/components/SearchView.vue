@@ -108,7 +108,7 @@ export default {
           }
         },
         columns: [
-          { data: 'problem' },
+          { data: 'problem_id', defaultContent: '' },
           { data: 'biblionumber' },
           { data: 'dtn', defaultContent: '' },
           {

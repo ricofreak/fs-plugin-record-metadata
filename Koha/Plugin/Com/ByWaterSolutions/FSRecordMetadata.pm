@@ -21,6 +21,62 @@ our $metadata = {
     version          => $VERSION,
 };
 
+our %ENTRY_COLUMNS = (
+    secondary_identifier => 'string',
+    owning_institution   => 'string',
+    access               => 'string',
+    number_of_pages      => 'integer',
+
+    md_date              => 'string',
+    md_by                => 'integer',
+
+    scan_site            => 'string',
+    scan_operator_by     => 'integer',
+    scan_machine         => 'string',
+    scan_date            => 'string',
+    scan_site_notes      => 'string',
+    scanned_image_count  => 'integer',
+
+    image_auditor_1_by   => 'integer',
+    audit_date_1         => 'string',
+    image_auditor_2_by   => 'integer',
+    audit_date_2         => 'string',
+
+    images_sent_by       => 'integer',
+    images_sent_date     => 'string',
+
+    ocr_site             => 'string',
+    ocr_date             => 'string',
+
+    pdf_ready_for_review => 'integer',
+    review_by            => 'integer',
+    review_start_date    => 'string',
+    review_complete_date => 'string',
+    image_review_notes   => 'string',
+
+    pdf_sent_to          => 'string',
+    pdf_loaded_date      => 'string',
+    pages_online         => 'integer',
+
+    pdf_orem_archived_date   => 'string',
+    pdf_orem_drive_name      => 'string',
+    pdf_copy2_archived_date  => 'string',
+    pdf_copy2_drive_name     => 'string',
+    tiff_orem_archived_date  => 'string',
+    tiff_orem_drive_name     => 'string',
+    tiff_copy2_archived_date => 'string',
+    tiff_copy2_drive_name    => 'string',
+
+    images_removed_by    => 'integer',
+    images_removed_date  => 'string',
+    images_removed_notes => 'string',
+);
+
+our %CREATE_ONLY_COLUMNS = (
+    biblionumber => 'integer',
+    dtn          => 'string',
+);
+
 sub new {
     my ( $class, $args ) = @_;
 
@@ -34,33 +90,108 @@ sub install {
     my ( $self, $args ) = @_;
     my $dbh = C4::Context->dbh;
 
-    my $entries_table = $self->get_qualified_table_name('entries');
+    my $entries_table  = $self->get_qualified_table_name('entries');
+    my $problems_table = $self->get_qualified_table_name('problems');
+
     unless ( TableExists($entries_table) ) {
         $dbh->do("
             CREATE TABLE `$entries_table` (
-                entry_id      INT(11) NOT NULL AUTO_INCREMENT,
-                biblionumber  INT(11) NOT NULL,
-                dtn           VARCHAR(32) NULL,
-                problem       TEXT NULL,
-                access        VARCHAR(80) NULL, -- FS_ACCESS authorised value
-                md            TINYINT(1) NOT NULL DEFAULT 0,
-                audit1        TINYINT(1) NOT NULL DEFAULT 0,
-                audit2        TINYINT(1) NOT NULL DEFAULT 0,
-                ocr           TINYINT(1) NOT NULL DEFAULT 0,
-                published     TINYINT(1) NOT NULL DEFAULT 0,
-                online_review TINYINT(1) NOT NULL DEFAULT 0,
-                created_on    TIMESTAMP NOT NULL DEFAULT current_timestamp(),
-                created_user  INT(11) NULL,
-                updated_on    TIMESTAMP NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
-                updated_user  INT(11) NULL,
+                entry_id             INT(11) NOT NULL AUTO_INCREMENT,
+                biblionumber         INT(11) NOT NULL,
+                dtn                  VARCHAR(64) NULL,
+                secondary_identifier VARCHAR(64) NULL,
+                owning_institution   VARCHAR(80) NULL,
+                access               VARCHAR(80) NULL,
+                number_of_pages      INT(11) NULL,
+
+                md_date              DATE NULL,
+                md_by                INT(11) NULL,
+
+                scan_site            VARCHAR(80) NULL,
+                scan_operator_by     INT(11) NULL,
+                scan_machine         VARCHAR(80) NULL,
+                scan_date            DATE NULL,
+                scan_site_notes      TEXT NULL,
+                scanned_image_count  INT(11) NULL,
+
+                image_auditor_1_by   INT(11) NULL,
+                audit_date_1         DATE NULL,
+                image_auditor_2_by   INT(11) NULL,
+                audit_date_2         DATE NULL,
+
+                images_sent_by       INT(11) NULL,
+                images_sent_date     DATE NULL,
+
+                ocr_site             VARCHAR(80) NULL,
+                ocr_date             DATE NULL,
+
+                pdf_ready_for_review TINYINT(1) NOT NULL DEFAULT 0,
+                review_by            INT(11) NULL,
+                review_start_date    DATE NULL,
+                review_complete_date DATE NULL,
+                image_review_notes   TEXT NULL,
+
+                pdf_sent_to          VARCHAR(80) NULL,
+                pdf_loaded_date      DATE NULL,
+                pages_online         INT(11) NULL,
+
+                pdf_orem_archived_date   DATE NULL,
+                pdf_orem_drive_name      VARCHAR(80) NULL,
+                pdf_copy2_archived_date  DATE NULL,
+                pdf_copy2_drive_name     VARCHAR(80) NULL,
+                tiff_orem_archived_date  DATE NULL,
+                tiff_orem_drive_name     VARCHAR(80) NULL,
+                tiff_copy2_archived_date DATE NULL,
+                tiff_copy2_drive_name    VARCHAR(80) NULL,
+
+                images_removed_by    INT(11) NULL,
+                images_removed_date  DATE NULL,
+                images_removed_notes TEXT NULL,
+
+                created_on   TIMESTAMP NOT NULL DEFAULT current_timestamp(),
+                created_user INT(11) NULL,
+                updated_on   TIMESTAMP NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+                updated_user INT(11) NULL,
+
                 PRIMARY KEY (`entry_id`),
+                UNIQUE KEY `dtn_uniq` (`dtn`),
                 INDEX (`biblionumber`),
-                INDEX (`dtn`),
+                INDEX (`scan_date`),
+                INDEX (`pdf_loaded_date`),
                 CONSTRAINT `fs_record_metadata_entries_ibfk_1` FOREIGN KEY (`biblionumber`)
                     REFERENCES `biblio` (`biblionumber`) ON DELETE CASCADE ON UPDATE CASCADE
             ) ENGINE = INNODB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
         ");
     }
+
+    unless ( TableExists($problems_table) ) {
+        $dbh->do("
+            CREATE TABLE `$problems_table` (
+                problem_id     INT(11) NOT NULL AUTO_INCREMENT,
+                entry_id       INT(11) NOT NULL,
+                step           VARCHAR(80) NULL,
+                status         VARCHAR(80) NULL,
+                reason         VARCHAR(80) NULL,
+                description    TEXT NULL,
+                problem_date   DATE NULL,
+                reported_by    INT(11) NULL,
+                initials       VARCHAR(16) NULL,
+                solution_owner INT(11) NULL,
+                resolved_on    DATE NULL,
+                created_on     TIMESTAMP NOT NULL DEFAULT current_timestamp(),
+                created_user   INT(11) NULL,
+                updated_on     TIMESTAMP NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+                updated_user   INT(11) NULL,
+                PRIMARY KEY (`problem_id`),
+                INDEX (`entry_id`),
+                INDEX (`status`),
+                INDEX (`problem_date`),
+                CONSTRAINT `fs_record_metadata_problems_ibfk_1` FOREIGN KEY (`entry_id`)
+                    REFERENCES `$entries_table` (`entry_id`) ON DELETE CASCADE ON UPDATE CASCADE
+            ) ENGINE = INNODB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+        ");
+    }
+
     return 1;
 }
 
@@ -100,6 +231,7 @@ sub search_entries {
     $page     = 1   if $page < 1;
 
     my $table = $self->get_qualified_table_name('entries');
+    my $problems_table = $self->get_qualified_table_name('problems');
     my $dbh   = C4::Context->dbh;
 
     my %columns = (
@@ -135,12 +267,20 @@ sub search_entries {
             SELECT e.*,
                    b.title,
                    b.author,
+                   e.md_date              IS NOT NULL AS md,
+                   e.audit_date_1         IS NOT NULL AS audit1,
+                   e.audit_date_2         IS NOT NULL AS audit2,
+                   e.ocr_date             IS NOT NULL AS ocr,
+                   e.pdf_loaded_date      IS NOT NULL AS published,
+                   e.review_complete_date IS NOT NULL AS online_review,
                    (SELECT GROUP_CONCAT(i.barcode ORDER BY i.barcode SEPARATOR ', ')
                     FROM items i WHERE i.biblionumber = e.biblionumber) AS barcodes,
                    (SELECT GROUP_CONCAT(DISTINCT i.itemcallnumber SEPARATOR ', ')
                     FROM items i WHERE i.biblionumber = e.biblionumber) AS callnumbers,
                    (SELECT GROUP_CONCAT(DISTINCT i.itype SEPARATOR ', ')
-                    FROM items i WHERE i.biblionumber = e.biblionumber) AS itypes
+                    FROM items i WHERE i.biblionumber = e.biblionumber) AS itypes,
+                   (SELECT MAX(p.problem_id) FROM `$problems_table` p
+                    WHERE p.entry_id = e.entry_id) AS problem_id
             $from
             ORDER BY e.entry_id DESC
             LIMIT ? OFFSET ?
@@ -161,8 +301,7 @@ sub create_entry {
     my $userenv = C4::Context->userenv;
     my $user_id = $userenv ? $userenv->{number} : undef;
 
-    my @cols = qw( biblionumber itemnumber dtn problem access
-                   md audit1 audit2 ocr published online_review );
+    my @cols = ( keys %CREATE_ONLY_COLUMNS, keys %ENTRY_COLUMNS );
 
     my ( @names, @placeholders, @binds );
     for my $col (@cols) {
@@ -195,10 +334,8 @@ sub update_entry {
     my $userenv = C4::Context->userenv;
     my $user_id = $userenv ? $userenv->{number} : undef;
 
-    my @cols = qw( problem access md audit1 audit2 ocr published online_review );
-
     my ( @sets, @binds );
-    for my $col (@cols) {
+    for my $col ( keys %ENTRY_COLUMNS ) {
         next unless exists $params->{$col};
         push @sets,  "$col = ?";
         push @binds, $params->{$col};
@@ -319,9 +456,38 @@ sub api_namespace {
 sub api_routes {
     my ( $self, $args ) = @_;
 
-    my $spec_str = $self->mbf_read('openapi.json');
-    my $spec     = decode_json($spec_str);
+    my $spec = decode_json( $self->mbf_read('openapi.json') );
+
+    my %create_props;
+    my %update_props;
+
+    for my $col ( keys %ENTRY_COLUMNS ) {
+        my $type = $ENTRY_COLUMNS{$col};
+        my $prop = { type => [ $type, 'null' ] };
+        $create_props{$col} = $prop;
+        $update_props{$col} = { %$prop };
+    }
+
+    for my $col ( keys %CREATE_ONLY_COLUMNS ) {
+        $create_props{$col} = { type => [ $CREATE_ONLY_COLUMNS{$col}, 'null' ] };
+    }
+
+    $create_props{biblionumber} = { type => 'integer' };
+
+    _inject_body_properties( $spec, '/entries',            'post', \%create_props );
+    _inject_body_properties( $spec, '/entries/{entry_id}', 'put',  \%update_props );
 
     return $spec;
 }
 
+sub _inject_body_properties {
+    my ( $spec, $path, $method, $props ) = @_;
+
+    my $op = $spec->{$path}{$method} or return;
+
+    for my $param ( @{ $op->{parameters} || [] } ) {
+        next unless ( $param->{in} // '' ) eq 'body';
+        $param->{schema}{properties} = $props;
+        return;
+    }
+}

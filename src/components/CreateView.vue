@@ -141,19 +141,10 @@ export default {
       searchType: 'biblionumber',
       searchTerm: '',
       record: null,
-      selectedItemnumber: null,
       loading: false,
       saving: false,
       saved: null,
       error: null,
-      flags: [
-        { key: 'md', label: 'MD' },
-        { key: 'audit1', label: 'Audit 1' },
-        { key: 'audit2', label: 'Audit 2' },
-        { key: 'ocr', label: 'OCR' },
-        { key: 'published', label: 'Published' },
-        { key: 'online_review', label: 'Online review' },
-      ],
       entry: this.blankEntry(),
       dtnStatus: 'idle',
       dtnCheckTimer: null,
@@ -202,9 +193,10 @@ export default {
     },
     blankEntry() {
       return {
-        access: '', problem: '',
-        md: false, audit1: false, audit2: false,
-        ocr: false, published: false, online_review: false,
+        extension: '',
+        access: '',
+        secondary_identifier: '',
+        owning_institution: '',
       };
     },
     async lookup() {
@@ -240,9 +232,9 @@ export default {
           biblionumber: this.record.biblionumber,
           dtn: this.dtn || null,
           access: this.entry.access || null,
-          problem: this.entry.problem || null,
+          secondary_identifier: this.entry.secondary_identifier || null,
+          owning_institution: this.entry.owning_institution || null,
         };
-        for (const f of this.flags) payload[f.key] = this.entry[f.key] ? 1 : 0;
 
         const res = await fetch(`${API_BASE}/entries`, {
           method: 'POST',

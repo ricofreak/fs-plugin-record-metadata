@@ -80,18 +80,7 @@
                     "required": true,
                     "schema": {
                         "type": "object",
-                        "properties": {
-                            "biblionumber":  { "type": "integer" },
-                            "dtn":           { "type": ["string", "null"] },
-                            "problem":       { "type": ["string", "null"] },
-                            "access":        { "type": ["string", "null"] },
-                            "md":            { "type": "integer" },
-                            "audit1":        { "type": "integer" },
-                            "audit2":        { "type": "integer" },
-                            "ocr":           { "type": "integer" },
-                            "published":     { "type": "integer" },
-                            "online_review": { "type": "integer" }
-                        },
+                        "properties": {},
                         "required": ["biblionumber"],
                         "additionalProperties": false
                     }
@@ -155,16 +144,7 @@
                     "required": true,
                     "schema": {
                         "type": "object",
-                        "properties": {
-                            "problem":       { "type": ["string", "null"] },
-                            "access":        { "type": ["string", "null"] },
-                            "md":            { "type": "integer" },
-                            "audit1":        { "type": "integer" },
-                            "audit2":        { "type": "integer" },
-                            "ocr":           { "type": "integer" },
-                            "published":     { "type": "integer" },
-                            "online_review": { "type": "integer" }
-                        },
+                        "properties": {},
                         "additionalProperties": false
                     }
                 }
