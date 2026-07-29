@@ -65,14 +65,6 @@
             <label for="access">Access:</label>
             <input id="access" v-model.trim="form.access" />
           </li>
-          <li>
-            <label for="problem">Problem:</label>
-            <textarea id="problem" v-model.trim="form.problem" rows="2"></textarea>
-          </li>
-          <li v-for="flag in flags" :key="flag.key">
-            <label :for="flag.key">{{ flag.label }}:</label>
-            <input :id="flag.key" type="checkbox" v-model="form[flag.key]" />
-          </li>
         </ol>
       </fieldset>
 
@@ -103,14 +95,6 @@ export default {
       saving: false,
       savedAt: null,
       error: null,
-      flags: [
-        { key: 'md', label: 'MD' },
-        { key: 'audit1', label: 'Audit 1' },
-        { key: 'audit2', label: 'Audit 2' },
-        { key: 'ocr', label: 'OCR' },
-        { key: 'published', label: 'Published' },
-        { key: 'online_review', label: 'Online review' },
-      ],
     };
   },
   methods: {
@@ -144,9 +128,7 @@ export default {
       this.savedAt = null;
       this.form = {
         access: entry.access || '',
-        problem: entry.problem || '',
       };
-      for (const f of this.flags) this.form[f.key] = !!entry[f.key];
     },
     async save() {
       this.saving = true;
@@ -154,10 +136,15 @@ export default {
       this.savedAt = null;
       try {
         const payload = {
-          access: this.form.access || null,
-          problem: this.form.problem || null,
+          md_date: this.form.md_date || null,
+          md_by: this.form.md_by || null,
+          scan_site: this.form.scan_site || null,
+          scan_operator_by: this.form.scan_operator_by || null,
+          scan_machine: this.form.scan_machine || null,
+          scan_date: this.form.scan_date || null,
+          scan_site_notes: this.form.scan_site_notes || null,
+          scanned_image_count: this.form.scanned_image_count || null,
         };
-        for (const f of this.flags) payload[f.key] = this.form[f.key] ? 1 : 0;
 
         const res = await fetch(`${API_BASE}/entries/${this.selected.entry_id}`, {
           method: 'PUT',
