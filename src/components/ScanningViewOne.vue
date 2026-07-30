@@ -112,8 +112,8 @@
 
         <ol>
           <li>
-            <label for="md_date">Metadata complete:</label>
-            <input id="md_date" v-model.trim="form.md_date" />
+            <label for="md_date">Metadata complete date:</label>
+            <input id="md_date" type="date" v-model.trim="form.md_date" @focus="setToday('scan_date')" />
           </li>
           <li>
             <label for="scan_site">Scan site:</label>
@@ -129,7 +129,7 @@
           </li>
           <li>
             <label for="scan_date">Scan date:</label>
-            <input id="scan_date" v-model.trim="form.scan_date" />
+            <input id="scan_date" type="date" v-model.trim="form.scan_date" @focus="setToday('scan_date')" />
           </li>
           <li>
             <label for="scan_site_notes">Scan site notes:</label>
@@ -172,6 +172,14 @@ export default {
     };
   },
   methods: {
+    setToday(field) {
+        if (this.form[field]) return; // if we already have a date, bail 
+        const d = new Date();
+        const iso = new Date(d.getTime() - d.getTimezoneOffset() * 60000)
+            .toISOString()
+            .slice(0, 10);
+        this.form[field] = iso;
+    },
     async search() {
       this.loading = true;
       this.error = null;
