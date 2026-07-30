@@ -1,8 +1,20 @@
 <template>
   <nav class="fsrm_nav">
     <ul class="nav nav-tabs" role="tablist">
-    <li v-for="item in items" :key="item.id" class="nav-item" role="presentation">
-        <a class="nav-link" :class="{ active: item.id === current }" href="#" role="tab" @click.prevent="$emit('navigate', item.id)"><span>{{ item.label }}</span></a>
+      <li
+        v-for="item in items"
+        :key="item.id"
+        class="nav-item"
+        role="presentation"
+      >
+        <a
+          class="nav-link"
+          :class="{ active: item.id === current }"
+          href="#"
+          role="tab"
+          @click.prevent="$emit('navigate', item.id)"
+          ><span>{{ item.label }}</span></a
+        >
       </li>
     </ul>
   </nav>
@@ -10,27 +22,29 @@
 
 <script>
 export default {
-  name: 'NavBar',
+  name: "NavBar",
   props: {
     current: { type: String, required: true },
   },
-  emits: ['navigate'],
+  emits: ["navigate"],
   computed: {
     items() {
       const all = [
-        { id: 'search',   label: 'Search' },
-        { id: 'new',      label: 'New +' },
-        { id: 'create', label: 'Scanning/processing', requires: 'canEdit' },
-        { id: 'problems', label: 'Problems' },
-        { id: 'reports',  label: 'Queues/reports' },
-        { id: 'admin',    label: 'Admin', requires: 'canEdit' },
+        { id: "search", label: "Search" },
+        { id: "new", label: "New +" },
+        { id: "create", label: "Scanning/processing", requires: "canEdit" },
+        { id: "problems", label: "Problems" },
+        { id: "reports", label: "Queues/reports" },
+        { id: "admin", label: "Admin", requires: "canEdit" },
       ];
       const perms = window.fsrmPermissions || {};
-      return all.filter(i => !i.requires || perms[i.requires]);
+      return all.filter((i) => !i.requires || perms[i.requires]);
     },
   },
 };
 </script>
 <style>
-    .fsrm_nav { margin-bottom: 1em; }
+.fsrm_nav {
+  margin-bottom: 1em;
+}
 </style>

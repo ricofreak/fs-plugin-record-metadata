@@ -1,10 +1,10 @@
-import { createApp } from "vue"
+import { createApp } from "vue";
 
-import NavBar from "./components/NavBar.vue"
-import App from "./components/Main.vue"
+import NavBar from "./components/NavBar.vue";
+import App from "./components/Main.vue";
 
-const app = createApp(App)
+const app = createApp(App);
 
-app.component('NavBar', NavBar)
+app.component("NavBar", NavBar);
 
-app.mount("#__app")
+app.mount("#__app");

@@ -6,7 +6,9 @@
         <option value="barcode">Barcode</option>
       </select>
       <input v-model.trim="searchTerm" placeholder="Search for an entry" />
-      <button type="submit" class="btn btn-primary" :disabled="!searchTerm">Search</button>
+      <button type="submit" class="btn btn-primary" :disabled="!searchTerm">
+        Search
+      </button>
     </form>
 
     <p v-if="error" class="fsrm-error">{{ error }}</p>
@@ -42,13 +44,13 @@
 </template>
 
 <script>
-import DataTable from 'datatables.net-vue3';
-import DataTablesCore from 'datatables.net-dt';
-import 'datatables.net-dt/css/dataTables.dataTables.min.css';
+import DataTable from "datatables.net-vue3";
+import DataTablesCore from "datatables.net-dt";
+import "datatables.net-dt/css/dataTables.dataTables.min.css";
 
 DataTable.use(DataTablesCore);
 
-const API_BASE = '/api/v1/contrib/fsrecordmetadata';
+const API_BASE = "/api/v1/contrib/fsrecordmetadata";
 
 const iconToggle = (d) =>
   d
@@ -56,13 +58,13 @@ const iconToggle = (d) =>
     : '<i class="fa fa-times fsrm-flag-no" aria-hidden="true"></i>';
 
 export default {
-  name: 'SearchView',
+  name: "SearchView",
   components: { DataTable },
   data() {
     return {
-      searchType: 'biblionumber',
-      searchTerm: '',
-      activeSearch: null,   // frozen copy of the submitted search
+      searchType: "biblionumber",
+      searchTerm: "",
+      activeSearch: null, // frozen copy of the submitted search
       tableKey: 0,
       error: null,
     };
@@ -70,14 +72,16 @@ export default {
   computed: {
     tableOptions() {
       const search = this.activeSearch;
-      const setError = (msg) => { this.error = msg; };
+      const setError = (msg) => {
+        this.error = msg;
+      };
       return {
         serverSide: true,
         processing: true,
-        searching: false,   // our form is the search; hide DT's own box
+        searching: false, // our form is the search; hide DT's own box
         pageLength: 50,
         lengthMenu: [25, 50, 100],
-        ordering: false,    // server orders by entry_id DESC; per-column sort is a later increment
+        ordering: false, // server orders by entry_id DESC; per-column sort is a later increment
         ajax: async (data, callback) => {
           try {
             const page = Math.floor(data.start / data.length) + 1;
@@ -87,14 +91,14 @@ export default {
               _per_page: data.length,
             });
             const res = await fetch(`${API_BASE}/entries?${params}`, {
-              headers: { Accept: 'application/json' },
-              credentials: 'same-origin',
+              headers: { Accept: "application/json" },
+              credentials: "same-origin",
             });
             if (!res.ok) {
               const body = await res.json().catch(() => ({}));
               throw new Error(body.error || `Search failed (${res.status})`);
             }
-            const total = parseInt(res.headers.get('X-Total-Count') || '0', 10);
+            const total = parseInt(res.headers.get("X-Total-Count") || "0", 10);
             const rows = await res.json();
             callback({
               draw: data.draw,
@@ -104,28 +108,34 @@ export default {
             });
           } catch (e) {
             setError(e.message);
-            callback({ draw: data.draw, data: [], recordsTotal: 0, recordsFiltered: 0 });
+            callback({
+              draw: data.draw,
+              data: [],
+              recordsTotal: 0,
+              recordsFiltered: 0,
+            });
           }
         },
         columns: [
-          { data: 'problem_id', defaultContent: '' },
-          { data: 'biblionumber' },
-          { data: 'dtn', defaultContent: '' },
+          { data: "problem_id", defaultContent: "" },
+          { data: "biblionumber" },
+          { data: "dtn", defaultContent: "" },
           {
             data: null,
-            render: (row) => [row.title, row.author].filter(Boolean).join(' / '),
+            render: (row) =>
+              [row.title, row.author].filter(Boolean).join(" / "),
           },
-          { data: 'itypes', defaultContent: '' },
-          { data: 'access', defaultContent: '' },
-          { data: 'callnumber', defaultContent: '' },
-          { data: 'barcodes', defaultContent: '' },
-          { data: 'md', render: iconToggle },
-          { data: 'scan', render: iconToggle },
-          { data: 'a1', render: iconToggle },
-          { data: 'a2', render: iconToggle },
-          { data: 'orc', render: iconToggle },
-          { data: 'published', render: iconToggle },
-          { data: 'or', render: iconToggle },
+          { data: "itypes", defaultContent: "" },
+          { data: "access", defaultContent: "" },
+          { data: "callnumber", defaultContent: "" },
+          { data: "barcodes", defaultContent: "" },
+          { data: "md", render: iconToggle },
+          { data: "scan", render: iconToggle },
+          { data: "a1", render: iconToggle },
+          { data: "a2", render: iconToggle },
+          { data: "orc", render: iconToggle },
+          { data: "published", render: iconToggle },
+          { data: "or", render: iconToggle },
         ],
       };
     },
@@ -134,17 +144,33 @@ export default {
     runSearch() {
       this.error = null;
       this.activeSearch = { type: this.searchType, term: this.searchTerm };
-      this.tableKey += 1;   // remount the table so a new search starts at page 1
+      this.tableKey += 1; // remount the table so a new search starts at page 1
     },
   },
 };
 </script>
 
 <style>
-.fsrm-saved { margin-left: 1rem; color: #418940; }
-.fsrm-search { display: flex; gap: .5rem; margin-bottom: 1rem; }
-.fsrm-error { color: #b00; }
-.fsrm-flag-yes { color: #418940; font-weight: bold; }
-.fsrm-flag-no  { color: #c00; }
-td.fsrm-flag-col { text-align: center; }
+.fsrm-saved {
+  margin-left: 1rem;
+  color: #418940;
+}
+.fsrm-search {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+.fsrm-error {
+  color: #b00;
+}
+.fsrm-flag-yes {
+  color: #418940;
+  font-weight: bold;
+}
+.fsrm-flag-no {
+  color: #c00;
+}
+td.fsrm-flag-col {
+  text-align: center;
+}
 </style>

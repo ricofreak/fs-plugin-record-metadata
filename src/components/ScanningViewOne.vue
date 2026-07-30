@@ -6,40 +6,52 @@
         <option value="barcode">Barcode</option>
       </select>
       <input v-model.trim="searchTerm" placeholder="Find an entry" />
-      <button type="submit" class="btn btn-primary" :disabled="!searchTerm || loading">
-        {{ loading ? 'Searching…' : 'Find entry' }}
+      <button
+        type="submit"
+        class="btn btn-primary"
+        :disabled="!searchTerm || loading"
+      >
+        {{ loading ? "Searching…" : "Find entry" }}
       </button>
     </form>
 
     <p v-if="error" class="fsrm-error">{{ error }}</p>
-    <p v-if="searched && !entries.length && !loading">No entries found. Create one first.</p>
+    <p v-if="searched && !entries.length && !loading">
+      No entries found. Create one first.
+    </p>
     <fieldset v-if="entries.length">
-        <h2>Entries</h2>
-        <table class="fsrm-items table table-success table-responsive">
-          <thead>
-            <tr>
-              <th></th>
-              <th>DTN</th>
-              <th>TN</th>
-              <th>Title</th>
-              <th>Access</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr
-              v-for="e in entries"
-              :key="e.entry_id"
-              :class="{ selected: selected && e.entry_id === selected.entry_id }"
-              @click="select(e)"
-            >
-              <td><input type="radio" :value="e.entry_id" :checked="selected && selected.entry_id === e.entry_id" /></td>
-              <td>{{ e.dtn }}</td>
-              <td>{{ e.biblionumber }}</td>
-              <td>{{ e.title }}</td>
-              <td>{{ e.access }}</td>
-            </tr>
-          </tbody>
-        </table>
+      <h2>Entries</h2>
+      <table class="fsrm-items table table-success table-responsive">
+        <thead>
+          <tr>
+            <th></th>
+            <th>DTN</th>
+            <th>TN</th>
+            <th>Title</th>
+            <th>Access</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr
+            v-for="e in entries"
+            :key="e.entry_id"
+            :class="{ selected: selected && e.entry_id === selected.entry_id }"
+            @click="select(e)"
+          >
+            <td>
+              <input
+                type="radio"
+                :value="e.entry_id"
+                :checked="selected && selected.entry_id === e.entry_id"
+              />
+            </td>
+            <td>{{ e.dtn }}</td>
+            <td>{{ e.biblionumber }}</td>
+            <td>{{ e.title }}</td>
+            <td>{{ e.access }}</td>
+          </tr>
+        </tbody>
+      </table>
     </fieldset>
 
     <div v-if="selected">
@@ -66,7 +78,10 @@
           </li>
           <li>
             <label for="secondary_identifier">Secondary identifier:</label>
-            <input id="secondary_identifier" v-model.trim="form.secondary_identifier" />
+            <input
+              id="secondary_identifier"
+              v-model.trim="form.secondary_identifier"
+            />
           </li>
           <li>
             <label for="problem_numbers">Problem number(s):</label>
@@ -78,7 +93,10 @@
           </li>
           <li>
             <label for="owning_institution">Owning Institution:</label>
-            <input id="owning_institution" v-model.trim="form.owning_institution" />
+            <input
+              id="owning_institution"
+              v-model.trim="form.owning_institution"
+            />
           </li>
           <li>
             <label for="access">Access level:</label>
@@ -94,13 +112,18 @@
           </li>
           <li>
             <label for="callnumbers">Call number(s):</label>
-            <input id="callnumbers" :value="selected.callnumbers" readonly disabled />
+            <input
+              id="callnumbers"
+              :value="selected.callnumbers"
+              readonly
+              disabled
+            />
           </li>
           <li>
             <label for="number_of_pages">Number of pages:</label>
             <input id="number_of_pages" v-model.trim="form.number_of_pages" />
           </li>
-          <li style="margin-top: 1em;">
+          <li style="margin-top: 1em">
             <label for="url_856x">URL:</label>
             <input id="url_856x" />
           </li>
@@ -113,7 +136,12 @@
         <ol>
           <li>
             <label for="md_date">Metadata complete date:</label>
-            <input id="md_date" type="date" v-model.trim="form.md_date" @focus="setToday('md_date')" />
+            <input
+              id="md_date"
+              type="date"
+              v-model.trim="form.md_date"
+              @focus="setToday('md_date')"
+            />
           </li>
           <li>
             <label for="scan_site">Scan site:</label>
@@ -129,46 +157,77 @@
           </li>
           <li>
             <label for="scan_date">Scan date:</label>
-            <input id="scan_date" type="date" v-model.trim="form.scan_date" @focus="setToday('scan_date')" />
+            <input
+              id="scan_date"
+              type="date"
+              v-model.trim="form.scan_date"
+              @focus="setToday('scan_date')"
+            />
           </li>
           <li>
             <label for="scan_site_notes">Scan site notes:</label>
-            <textarea id="scan_site_notes" v-model.trim="form.scan_site_notes"></textarea>
+            <textarea
+              id="scan_site_notes"
+              v-model.trim="form.scan_site_notes"
+            ></textarea>
           </li>
           <li>
             <label for="scanned_image_count">Scanned images count:</label>
-            <input id="scanned_image_count" v-model.trim="form.scanned_image_count" />
+            <input
+              id="scanned_image_count"
+              v-model.trim="form.scanned_image_count"
+            />
           </li>
-          <li style="margin-top: 1em;">
+          <li style="margin-top: 1em">
             <label for="image_auditor_1_by">Image auditor 1:</label>
-            <input id="image_auditor_1_by" v-model.trim="form.image_auditor_1_by" />
+            <input
+              id="image_auditor_1_by"
+              v-model.trim="form.image_auditor_1_by"
+            />
           </li>
           <li>
             <label for="audit_date_1">Audit 1 date:</label>
-            <input id="audit_date_1" type="date" v-model.trim="form.audit_date_1" @focus="setToday('audit_date_1')" />
+            <input
+              id="audit_date_1"
+              type="date"
+              v-model.trim="form.audit_date_1"
+              @focus="setToday('audit_date_1')"
+            />
           </li>
           <li>
             <label for="image_auditor_2_by">Image auditor 2:</label>
-            <input id="image_auditor_2_by" v-model.trim="form.image_auditor_2_by" />
+            <input
+              id="image_auditor_2_by"
+              v-model.trim="form.image_auditor_2_by"
+            />
           </li>
           <li>
             <label for="audit_date_2">Audit 2 date:</label>
-            <input id="audit_date_2" type="date" v-model.trim="form.audit_date_2" @focus="setToday('audit_date_2')" />
+            <input
+              id="audit_date_2"
+              type="date"
+              v-model.trim="form.audit_date_2"
+              @focus="setToday('audit_date_2')"
+            />
           </li>
-          <li style="margin-top: 1em;">
+          <li style="margin-top: 1em">
             <label for="images_sent_by">Image sent by:</label>
             <input id="images_sent_by" v-model.trim="form.images_sent_by" />
           </li>
           <li>
             <label for="images_sent_date">Image sent date:</label>
-            <input id="images_sent_date" v-model.trim="form.images_sent_date" @focus="setToday('images_sent_date')" />
+            <input
+              id="images_sent_date"
+              v-model.trim="form.images_sent_date"
+              @focus="setToday('images_sent_date')"
+            />
           </li>
         </ol>
       </fieldset>
 
       <fieldset class="action">
         <button class="btn btn-primary" :disabled="saving" @click="save">
-          {{ saving ? 'Saving…' : 'Save' }}
+          {{ saving ? "Saving…" : "Save" }}
         </button>
         <span v-if="savedAt" class="fsrm-saved">Saved.</span>
       </fieldset>
@@ -177,14 +236,14 @@
 </template>
 
 <script>
-const API_BASE = '/api/v1/contrib/fsrecordmetadata';
+const API_BASE = "/api/v1/contrib/fsrecordmetadata";
 
 export default {
-  name: 'ScanningView',
+  name: "ScanningView",
   data() {
     return {
-      searchType: 'biblionumber',
-      searchTerm: '',
+      searchType: "biblionumber",
+      searchTerm: "",
       entries: [],
       selected: null,
       form: {},
@@ -197,12 +256,12 @@ export default {
   },
   methods: {
     setToday(field) {
-        if (this.form[field]) return; // if we already have a date, bail 
-        const d = new Date();
-        const iso = new Date(d.getTime() - d.getTimezoneOffset() * 60000)
-            .toISOString()
-            .slice(0, 10);
-        this.form[field] = iso;
+      if (this.form[field]) return; // if we already have a date, bail
+      const d = new Date();
+      const iso = new Date(d.getTime() - d.getTimezoneOffset() * 60000)
+        .toISOString()
+        .slice(0, 10);
+      this.form[field] = iso;
     },
     async search() {
       this.loading = true;
@@ -211,10 +270,12 @@ export default {
       this.selected = null;
       this.savedAt = null;
       try {
-        const params = new URLSearchParams({ [this.searchType]: this.searchTerm });
+        const params = new URLSearchParams({
+          [this.searchType]: this.searchTerm,
+        });
         const res = await fetch(`${API_BASE}/entries?${params}`, {
-          headers: { Accept: 'application/json' },
-          credentials: 'same-origin',
+          headers: { Accept: "application/json" },
+          credentials: "same-origin",
         });
         if (!res.ok) {
           const body = await res.json().catch(() => ({}));
@@ -233,8 +294,8 @@ export default {
       this.selected = entry;
       this.savedAt = null;
       this.form = {
-        secondary_identifier: entry.secondary_identifier || '',
-        number_of_pages: entry.number_of_pages || '',
+        secondary_identifier: entry.secondary_identifier || "",
+        number_of_pages: entry.number_of_pages || "",
       };
     },
     async save() {
@@ -255,19 +316,27 @@ export default {
           scan_site_notes: this.form.scan_site_notes || null,
           scanned_image_count: this.form.scanned_image_count || null,
         };
-        console.log('PUT', this.selected.entry_id, JSON.stringify(payload));
-        const res = await fetch(`${API_BASE}/entries/${this.selected.entry_id}`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
-          credentials: 'same-origin',
-          body: JSON.stringify(payload),
-        });
+        console.log("PUT", this.selected.entry_id, JSON.stringify(payload));
+        const res = await fetch(
+          `${API_BASE}/entries/${this.selected.entry_id}`,
+          {
+            method: "PUT",
+            headers: {
+              "Content-Type": "application/json",
+              Accept: "application/json",
+            },
+            credentials: "same-origin",
+            body: JSON.stringify(payload),
+          },
+        );
         if (!res.ok) {
           const body = await res.json().catch(() => ({}));
           throw new Error(body.error || `Save failed (${res.status})`);
         }
         const updated = await res.json();
-        const idx = this.entries.findIndex(e => e.entry_id === updated.entry_id);
+        const idx = this.entries.findIndex(
+          (e) => e.entry_id === updated.entry_id,
+        );
         if (idx !== -1) this.entries.splice(idx, 1, updated);
         this.selected = updated;
         this.savedAt = Date.now();
@@ -281,5 +350,8 @@ export default {
 };
 </script>
 <style>
-#scanform_step1 { display: grid; grid-template-columns: 1fr 1fr;  }
+#scanform_step1 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+}
 </style>

@@ -16,8 +16,10 @@
     "vue": "^3.5.39"
   },
   "devDependencies": {
+    "@koha-community/prettier-plugin-template-toolkit": "^2.0.2",
     "@vue/compiler-sfc": "^3.5.39",
     "css-loader": "^7.1.4",
+    "prettier": "^3.4.2",
     "style-loader": "^4.0.0",
     "vue-loader": "^17.4.2",
     "webpack": "^5.108.4",
