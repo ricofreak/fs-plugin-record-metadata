@@ -54,16 +54,90 @@
         </ol>
       </fieldset>
 
-      <fieldset class="rows">
-        <legend>Processing status</legend>
+      <fieldset id="scanform_step1" class="rows">
         <ol>
           <li>
-            <label for="access">Digital title number:</label>
-            <input id="dtn" v-model.trim="form.access" />
+            <label for="dtn">Digital title number:</label>
+            <input id="dtn" :value="selected.dtn" readonly disabled />
           </li>
           <li>
-            <label for="access">Access:</label>
+            <label for="tn">Title number:</label>
+            <input id="tn" :value="selected.biblionumber" readonly disabled />
+          </li>
+          <li>
+            <label for="secondary_identifier">Secondary identifier:</label>
+            <input id="secondary_identifier" v-model.trim="form.secondary_identifier" />
+          </li>
+          <li>
+            <label for="problem_numbers">Problem number(s):</label>
+            <input id="problem_numbers" v-model.trim="form.problem_numbers" />
+          </li>
+          <li>
+            <label for="add_problem">Add problems:</label>
+            <button id="add_problem">+ Add</button>
+          </li>
+          <li>
+            <label for="owning_institution">Owning Institution:</label>
+            <input id="owning_institution" v-model.trim="form.owning_institution" />
+          </li>
+          <li>
+            <label for="access">Access level:</label>
             <input id="access" v-model.trim="form.access" />
+          </li>
+          <li>
+            <label for="itypes">Item type(s):</label>
+            <input id="itypes" :value="selected.itypes" readonly disabled />
+          </li>
+          <li>
+            <label for="barcodes">Barcode(s):</label>
+            <input id="barcodes" :value="selected.barcodes" readonly disabled />
+          </li>
+          <li>
+            <label for="callnumbers">Call number(s):</label>
+            <input id="callnumbers" :value="selected.callnumbers" readonly disabled />
+          </li>
+          <li>
+            <label for="number_of_pages">Number of pages:</label>
+            <input id="number_of_pages" v-model.trim="form.number_of_pages" />
+          </li>
+          <li style="margin-top: 1em;">
+            <label for="url_856x">URL:</label>
+            <input id="url_856x" />
+          </li>
+          <li>
+            <label for="limb_id">Limb ID:</label>
+            <input id="limb_id" />
+          </li>
+        </ol>
+
+        <ol>
+          <li>
+            <label for="md_date">Metadata complete:</label>
+            <input id="md_date" v-model.trim="form.md_date" />
+          </li>
+          <li>
+            <label for="scan_site">Scan site:</label>
+            <input id="scan_site" v-model.trim="form.scan_site" />
+          </li>
+          <li>
+            <label for="scan_operator_by">Scan operator:</label>
+            <input id="scan_operator_by" v-model.trim="form.scan_operator_by" />
+          </li>
+          <li>
+            <label for="scan_machine">Scan machine #:</label>
+            <input id="scan_machine" v-model.trim="form.scan_machine" />
+          </li>
+          <li>
+            <label for="scan_date">Scan date:</label>
+            <input id="scan_date" v-model.trim="form.scan_date" />
+          </li>
+          <li>
+            <label for="scan_site_notes">Scan site notes:</label>
+            <input id="scan_site_notes" v-model.trim="form.scan_site_notes" />
+          </li>
+          <li>
+            <label for="scanned_image_count">Scanned images count:</label>
+            <input id="scanned_image_count" v-model.trim="form.scanned_image_count" />
           </li>
         </ol>
       </fieldset>
@@ -127,7 +201,8 @@ export default {
       this.selected = entry;
       this.savedAt = null;
       this.form = {
-        access: entry.access || '',
+        secondary_identifier: entry.secondary_identifier || '',
+        number_of_pages: entry.number_of_pages || '',
       };
     },
     async save() {
@@ -136,6 +211,9 @@ export default {
       this.savedAt = null;
       try {
         const payload = {
+          secondary_identifier: this.form.secondary_identifier || null,
+          number_of_pages: this.form.number_of_pages || null,
+
           md_date: this.form.md_date || null,
           md_by: this.form.md_by || null,
           scan_site: this.form.scan_site || null,
@@ -145,7 +223,7 @@ export default {
           scan_site_notes: this.form.scan_site_notes || null,
           scanned_image_count: this.form.scanned_image_count || null,
         };
-
+        console.log('PUT', this.selected.entry_id, JSON.stringify(payload));
         const res = await fetch(`${API_BASE}/entries/${this.selected.entry_id}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
@@ -170,3 +248,6 @@ export default {
   },
 };
 </script>
+<style>
+#scanform_step1 { display: grid; grid-template-columns: 1fr 1fr;  }
+</style>
