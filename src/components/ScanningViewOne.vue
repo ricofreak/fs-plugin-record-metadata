@@ -113,7 +113,7 @@
         <ol>
           <li>
             <label for="md_date">Metadata complete date:</label>
-            <input id="md_date" type="date" v-model.trim="form.md_date" @focus="setToday('scan_date')" />
+            <input id="md_date" type="date" v-model.trim="form.md_date" @focus="setToday('md_date')" />
           </li>
           <li>
             <label for="scan_site">Scan site:</label>
@@ -133,11 +133,35 @@
           </li>
           <li>
             <label for="scan_site_notes">Scan site notes:</label>
-            <input id="scan_site_notes" v-model.trim="form.scan_site_notes" />
+            <textarea id="scan_site_notes" v-model.trim="form.scan_site_notes"></textarea>
           </li>
           <li>
             <label for="scanned_image_count">Scanned images count:</label>
             <input id="scanned_image_count" v-model.trim="form.scanned_image_count" />
+          </li>
+          <li style="margin-top: 1em;">
+            <label for="image_auditor_1_by">Image auditor 1:</label>
+            <input id="image_auditor_1_by" v-model.trim="form.image_auditor_1_by" />
+          </li>
+          <li>
+            <label for="audit_date_1">Audit 1 date:</label>
+            <input id="audit_date_1" type="date" v-model.trim="form.audit_date_1" @focus="setToday('audit_date_1')" />
+          </li>
+          <li>
+            <label for="image_auditor_2_by">Image auditor 2:</label>
+            <input id="image_auditor_2_by" v-model.trim="form.image_auditor_2_by" />
+          </li>
+          <li>
+            <label for="audit_date_2">Audit 2 date:</label>
+            <input id="audit_date_2" type="date" v-model.trim="form.audit_date_2" @focus="setToday('audit_date_2')" />
+          </li>
+          <li style="margin-top: 1em;">
+            <label for="images_sent_by">Image sent by:</label>
+            <input id="images_sent_by" v-model.trim="form.images_sent_by" />
+          </li>
+          <li>
+            <label for="images_sent_date">Image sent date:</label>
+            <input id="images_sent_date" v-model.trim="form.images_sent_date" @focus="setToday('images_sent_date')" />
           </li>
         </ol>
       </fieldset>
