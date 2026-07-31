@@ -140,98 +140,13 @@
             <input id="limb_id" />
           </li>
         </ol>
-
         <ol>
           <li>
-            <label for="md_date">Metadata complete date:</label>
-            <input
-              id="md_date"
-              type="date"
-              v-model.trim="form.md_date"
-              @focus="setToday('md_date')"
-            />
-          </li>
-          <li>
-            <label for="scan_site">Scan site:</label>
-            <input id="scan_site" v-model.trim="form.scan_site" />
-          </li>
-          <li>
-            <label for="scan_operator_by">Scan operator:</label>
-            <input id="scan_operator_by" v-model.trim="form.scan_operator_by" />
-          </li>
-          <li>
-            <label for="scan_machine">Scan machine #:</label>
-            <input id="scan_machine" v-model.trim="form.scan_machine" />
-          </li>
-          <li>
-            <label for="scan_date">Scan date:</label>
-            <input
-              id="scan_date"
-              type="date"
-              v-model.trim="form.scan_date"
-              @focus="setToday('scan_date')"
-            />
-          </li>
-          <li>
-            <label for="scan_site_notes">Scan site notes:</label>
-            <textarea
-              id="scan_site_notes"
-              v-model.trim="form.scan_site_notes"
-            ></textarea>
-          </li>
-          <li>
-            <label for="scanned_image_count">Scanned images count:</label>
-            <input
-              id="scanned_image_count"
-              v-model.trim="form.scanned_image_count"
-            />
-          </li>
-          <li style="margin-top: 1em">
-            <label for="image_auditor_1_by">Image auditor 1:</label>
-            <input
-              id="image_auditor_1_by"
-              v-model.trim="form.image_auditor_1_by"
-            />
-          </li>
-          <li>
-            <label for="audit_date_1">Audit 1 date:</label>
-            <input
-              id="audit_date_1"
-              type="date"
-              v-model.trim="form.audit_date_1"
-              @focus="setToday('audit_date_1')"
-            />
-          </li>
-          <li>
-            <label for="image_auditor_2_by">Image auditor 2:</label>
-            <input
-              id="image_auditor_2_by"
-              v-model.trim="form.image_auditor_2_by"
-            />
-          </li>
-          <li>
-            <label for="audit_date_2">Audit 2 date:</label>
-            <input
-              id="audit_date_2"
-              type="date"
-              v-model.trim="form.audit_date_2"
-              @focus="setToday('audit_date_2')"
-            />
-          </li>
-          <li style="margin-top: 1em">
-            <label for="images_sent_by">Image sent by:</label>
-            <input id="images_sent_by" v-model.trim="form.images_sent_by" />
-          </li>
-          <li>
-            <label for="images_sent_date">Image sent date:</label>
-            <input
-              id="images_sent_date"
-              type="date"
-              v-model.trim="form.images_sent_date"
-              @focus="setToday('images_sent_date')"
-            />
+            <label for="orc_site">Problem number(s):</label>
+            <input id="problem_numbers" v-model.trim="form.problem_numbers" />
           </li>
         </ol>
+
       </fieldset>
 
       <fieldset class="action">
@@ -240,12 +155,6 @@
         </button>
         <span v-if="savedAt" class="fsrm-saved">Saved.</span>
       </fieldset>
-    <div class="action">
-      <button type="button" @click="saveAndGo" :disabled="saving">
-        {{ saving ? "Saving…" : "Save and continue to step 2 →" }}
-      </button>
-      <p v-if="error" class="error" role="alert">{{ error }}</p>
-    </div>
     </div>
   </div>
 </template>
@@ -254,7 +163,7 @@
 const API_BASE = "/api/v1/contrib/fsrecordmetadata";
 
 export default {
-  name: "ScanningViewOne",
+  name: "ScanningViewTwo",
   props: {
     entry: { type: Object, default: null },
   },
@@ -273,9 +182,9 @@ export default {
     };
   },
   created() {
+    console.log("step2 entry prop:", this.entry);
     if (this.entry) this.select(this.entry);
   },
-
   watch: {
     entry(val) {
       if (val) this.select(val);
@@ -400,19 +309,11 @@ export default {
         if (idx !== -1) this.entries.splice(idx, 1, updated);
         this.selected = updated;
         this.savedAt = Date.now();
-        return updated;
       } catch (e) {
         this.error = e.message;
-        return null;
       } finally {
         this.saving = false;
       }
-    },
-    async saveAndGo() {
-      const updated = await this.save();
-      if (!updated) return;
-      this.$emit("saved", updated);   // Main sets this.entry = updated
-      this.$emit("step", 2);
     },
   },
 };
