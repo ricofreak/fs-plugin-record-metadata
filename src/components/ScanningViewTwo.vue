@@ -67,7 +67,7 @@
         </ol>
       </fieldset>
 
-      <fieldset id="scanform_step1" class="rows">
+      <fieldset id="scanform_step2" class="rows">
         <ol>
           <li>
             <label for="dtn">Digital title number:</label>
@@ -142,8 +142,90 @@
         </ol>
         <ol>
           <li>
-            <label for="orc_site">Problem number(s):</label>
-            <input id="problem_numbers" v-model.trim="form.problem_numbers" />
+            <label for="ocr_site">OCR site:</label>
+            <input id="ocr_site" v-model.trim="form.ocr_site" />
+          </li>
+          <li>
+            <label for="ocr_date">OCR date:</label>
+            <input id="ocr_date" type="date" v-model.trim="form.ocr_date" @focus="setToday('ocr_date')" />
+          </li>
+          <li>
+            <label for="pdf_ready_for_review">PDF ready for review:</label>
+            <input id="pdf_ready_for_review" v-model.trim="form.pdf_ready_for_review" />
+          </li>
+          <li>
+            <label for="review_by">Published image review by:</label>
+            <input id="review_by" type="date" v-model.trim="form.review_by" />
+          </li>
+          <li>
+            <label for="review_start_date">Review start date:</label>
+            <input id="review_start_date" type="date" v-model.trim="form.review_start_date" @focus="setToday('review_start_date')" />
+          </li>
+          <li>
+            <label for="review_complete_date">Review complete date:</label>
+            <input id="review_complete_date" type="date" v-model.trim="form.review_complete_date" @focus="setToday('review_complete_date')" />
+          </li>
+          <li>
+            <label for="image_review_notes">Image review notes:</label>
+            <textarea id="image_review_notes" v-model.trim="form.image_review_notes"></textarea>
+          </li>
+          <li>
+            <label for="pdf_sent_to">PDF sent to:</label>
+            <input id="pdf_sent_to" v-model.trim="form.pdf_sent_to" />
+          </li>
+          <li>
+            <label for="pdf_loaded_date">PDF loaded date:</label>
+            <input id="pdf_loaded_date" type="date" v-model.trim="form.pdf_loaded_date" @focus="setToday('pdf_loaded_date')" />
+          </li>
+          <li>
+            <label for="pages_online">Loaded pages #:</label>
+            <textarea id="pages_online" v-model.trim="form.pages_online"></textarea>
+          </li>
+        </ol>
+        <ol>
+          <li>
+            <label for="pdf_orem_archived_date">PDF Orem archive date:</label>
+            <input id="pdf_orem_archived_date" type="date" v-model.trim="form.pdf_orem_archived_date" @focus="setToday('pdf_orem_archived_date')" />
+          </li>
+          <li>
+            <label for="pdf_orem_drive_name">PDF Orem drive name:</label>
+            <input id="pdf_orem_drive_name" v-model.trim="form.pdf_orem_drive_name" />
+          </li>
+          <li>
+            <label for="pdf_copy2_archived_date">PDF Copy2 archive date:</label>
+            <input id="pdf_copy2_archived_date" type="date" v-model.trim="form.pdf_copy2_archived_date" @focus="setToday('pdf_copy2_archived_date')" />
+          </li>
+          <li>
+            <label for="pdf_copy2_drive_name">PDF Copy2 drive name:</label>
+            <input id="pdf_copy2_drive_name" v-model.trim="form.pdf_copy2_drive_name" />
+          </li>
+          <li>
+            <label for="tiff_orem_archived_date">TIFF Orem archive date:</label>
+            <input id="tiff_orem_archived_date" type="date" v-model.trim="form.tiff_orem_archived_date" @focus="setToday('tiff_orem_archived_date')" />
+          </li>
+          <li>
+            <label for="tiff_orem_drive_name">TIFF Orem drive name:</label>
+            <input id="tiff_orem_drive_name" v-model.trim="form.tiff_orem_drive_name" />
+          </li>
+          <li>
+            <label for="tiff_copy2_archived_date">TIFF Copy2 archive date:</label>
+            <input id="tiff_copy2_archived_date" type="date" v-model.trim="form.tiff_copy2_archived_date" @focus="setToday('tiff_copy2_archived_date')" />
+          </li>
+          <li>
+            <label for="tiff_copy2_drive_name">TIFF Copy2 drive name:</label>
+            <input id="tiff_copy2_drive_name" v-model.trim="form.tiff_copy2_drive_name" />
+          </li>
+          <li>
+            <label for="images_removed_by">Image removal request by:</label>
+            <input id="images_removed_by" v-model.trim="form.images_removed_by"  />
+          </li>
+          <li>
+            <label for="images_removed_date">Image removal date:</label>
+            <input id="images_removed_date" type="date" v-model.trim="form.images_removed_date" @focus="setToday('images_removed_date')" />
+          </li>
+          <li>
+            <label for="images_removed_notes">Image removal notes:</label>
+            <textarea id="images_removed_notes" v-model.trim="form.images_removed_notes"></textarea>
           </li>
         </ol>
 
@@ -161,6 +243,8 @@
 
 <script>
 const API_BASE = "/api/v1/contrib/fsrecordmetadata";
+
+const toDateInput = (v) => (v ? String(v).slice(0, 10) : "");
 
 export default {
   name: "ScanningViewTwo",
@@ -182,7 +266,6 @@ export default {
     };
   },
   created() {
-    console.log("step2 entry prop:", this.entry);
     if (this.entry) this.select(this.entry);
   },
   watch: {
@@ -236,23 +319,29 @@ export default {
         access: entry.access || "",
         number_of_pages: entry.number_of_pages || "",
 
-        md_date: entry.md_date || "",
-        md_by: entry.md_by || "",
+        ocr_site: entry.ocr_site || "",
+        ocr_date: toDateInput(entry.ocr_date),
+        pdf_ready_for_review: entry.pdf_ready_for_review || "",
+        review_by: toDateInput(entry.review_by),
+        review_start_date: toDateInput(entry.review_start_date),
+        review_complete_date: toDateInput(entry.review_complete_date),
+        image_review_notes: entry.image_review_notes || "",
+        pdf_sent_to: entry.pdf_sent_to || "",
+        pdf_loaded_date: toDateInput(entry.pdf_loaded_date),
+        pages_online: entry.pages_online || "",
 
-        scan_site: entry.scan_site || "",
-        scan_operator_by: entry.scan_operator_by || "",
-        scan_machine: entry.scan_machine || "",
-        scan_date: entry.scan_date || "",
-        scan_site_notes: entry.scan_site_notes || "",
-        scanned_image_count: entry.scanned_image_count || "",
+        pdf_orem_archived_date: toDateInput(entry.pdf_orem_archived_date),
+        pdf_orem_drive_name: entry.pdf_orem_drive_name || "",
+        pdf_copy2_archived_date: toDateInput(entry.pdf_copy2_archived_date),
+        pdf_copy2_drive_name: entry.pdf_copy2_drive_name || "",
+        tiff_orem_archived_date: toDateInput(entry.tiff_orem_archived_date),
+        tiff_orem_drive_name: entry.tiff_orem_drive_name || "",
+        tiff_copy2_archived_date: toDateInput(entry.tiff_copy2_archived_date),
+        tiff_copy2_drive_name: entry.tiff_copy2_drive_name || "",
 
-        image_auditor_1_by: entry.image_auditor_1_by || "",
-        audit_date_1: entry.audit_date_1 || "",
-        image_auditor_2_by: entry.image_auditor_2_by || "",
-        audit_date_2: entry.audit_date_2 || "",
-
-        images_sent_by: entry.images_sent_by || "",
-        images_sent_date: entry.images_sent_date || "",
+        images_removed_by: entry.images_removed_by || "",
+        images_removed_date: toDateInput(entry.images_removed_date),
+        images_removed_notes: entry.images_removed_notes || "",
       };
     },
     async save() {
@@ -267,23 +356,30 @@ export default {
           access: this.form.access || null,
           number_of_pages: this.form.number_of_pages || null,
 
-          md_date: this.form.md_date || null,
-          md_by: this.form.md_by || null,
+          ocr_site: this.form.ocr_site || null,
+          ocr_date: this.form.ocr_date || null,
+          pdf_ready_for_review: this.form.pdf_ready_for_review || null,
+          review_by: this.form.review_by || null,
+          review_start_date: this.form.review_start_date || null,
+          review_complete_date: this.form.review_complete_date || null,
+          image_review_notes: this.form.image_review_notes || null,
+          pdf_sent_to: this.form.pdf_sent_to || null,
+          pdf_loaded_date: this.form.pdf_loaded_date || null,
+          pages_online: this.form.pages_online || null,
 
-          scan_site: this.form.scan_site || null,
-          scan_operator_by: this.form.scan_operator_by || null,
-          scan_machine: this.form.scan_machine || null,
-          scan_date: this.form.scan_date || null,
-          scan_site_notes: this.form.scan_site_notes || null,
-          scanned_image_count: this.form.scanned_image_count || null,
+          pdf_orem_archived_date: this.form.pdf_orem_archived_date || null,
+          pdf_orem_drive_name: this.form.pdf_orem_drive_name || null,
+          pdf_copy2_archived_date: this.form.pdf_copy2_archived_date || null,
+          pdf_copy2_drive_name: this.form.pdf_copy2_drive_name || null,
+          tiff_orem_archived_date: this.form.tiff_orem_archived_date || null,
+          tiff_orem_drive_name: this.form.tiff_orem_drive_name || null,
+          tiff_copy2_archived_date: this.form.tiff_copy2_archived_date || null,
+          tiff_copy2_drive_name: this.form.tiff_copy2_drive_name || null,
 
-          image_auditor_1_by: this.form.image_auditor_1_by || null,
-          audit_date_1: this.form.audit_date_1 || null,
-          image_auditor_2_by: this.form.image_auditor_2_by || null,
-          audit_date_2: this.form.audit_date_2 || null,
+          images_removed_by: this.form.images_removed_by || null,
+          images_removed_date: this.form.images_removed_date || null,
+          images_removed_notes: this.form.images_removed_notes || null,
 
-          images_sent_by: this.form.images_sent_by || null,
-          images_sent_date: this.form.images_sent_date || null,
         };
         console.log("PUT", this.selected.entry_id, JSON.stringify(payload));
         const res = await fetch(
@@ -319,8 +415,8 @@ export default {
 };
 </script>
 <style>
-#scanform_step1 {
+#scanform_step2 {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: 1fr 1fr 1fr;
 }
 </style>

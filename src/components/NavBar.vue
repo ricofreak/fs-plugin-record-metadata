@@ -33,6 +33,7 @@ export default {
         { id: "search", label: "Search" },
         { id: "new", label: "New +" },
         { id: "create", label: "Scanning/processing", requires: "canEdit" },
+        { id: "create2", label: "Scanning/processing 2", requires: "canEdit" },
         { id: "problems", label: "Problems" },
         { id: "reports", label: "Queues/reports" },
         { id: "admin", label: "Admin", requires: "canEdit" },

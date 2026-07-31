@@ -4,17 +4,17 @@
     <SearchView v-if="view === 'search'" @select="openEntry" />
     <CreateView v-if="view === 'new'" @created="openEntry" />
     <ScanningViewOne
-      v-if="view === 'create' && canEdit && step === 1"
+      v-if="view === 'create' && canEdit"
       :entry="entry"
       @saved="onSaved"
-      @step="step = $event"
+      @step="onStep"
       @cancel="closeEntry"
     />
     <ScanningViewTwo
-      v-if="view === 'create' && canEdit && step === 2"
+      v-if="view === 'create2' && canEdit"
       :entry="entry"
       @saved="onSaved"
-      @step="step = $event"
+      @step="onStep"
       @cancel="closeEntry"
     />
   </div>
@@ -30,30 +30,26 @@ export default {
   name: "Main",
   components: { SearchView, CreateView, ScanningViewOne, ScanningViewTwo },
   data() {
-    return { view: "search", step: 1, entry: null };
+    return { view: "search", entry: null };
   },
   computed: {
     canEdit() {
       return (window.fsrmPermissions || {}).canEdit === true;
     },
   },
-  watch: {
-    view(v) {
-      if (v !== "create") this.step = 1;
-    },
-  },
   methods: {
     openEntry(entry) {
       this.entry = entry;
-      this.step = 1;
       this.view = "create";
     },
     onSaved(updated) {
       this.entry = updated;
     },
+    onStep(n) {
+      this.view = n === 2 ? "create2" : "create";
+    },
     closeEntry() {
       this.entry = null;
-      this.step = 1;
       this.view = "search";
     },
   },
