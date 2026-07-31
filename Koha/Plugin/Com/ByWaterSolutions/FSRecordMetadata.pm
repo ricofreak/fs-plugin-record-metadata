@@ -24,6 +24,7 @@ our $metadata = {
 our %ENTRY_COLUMNS = (
     secondary_identifier => 'string',
     owning_institution   => 'string',
+    volume_description   => 'string',
     access               => 'string',
     number_of_pages      => 'integer',
 
@@ -101,6 +102,7 @@ sub install {
                 dtn                  VARCHAR(64) NULL,
                 secondary_identifier VARCHAR(64) NULL,
                 owning_institution   VARCHAR(80) NULL,
+                volume_description   VARCHAR(255) NULL,
                 access               VARCHAR(80) NULL,
                 number_of_pages      INT(11) NULL,
 

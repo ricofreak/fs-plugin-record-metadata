@@ -242,9 +242,9 @@ export default {
     blankEntry() {
       return {
         extension: "",
-        access: "",
-        secondary_identifier: "",
+        volume_description: "",
         owning_institution: "",
+        scan_site: "",
       };
     },
     async lookup() {
@@ -283,11 +283,11 @@ export default {
         const payload = {
           biblionumber: this.record.biblionumber,
           dtn: this.dtn || null,
-          access: this.entry.access || null,
-          secondary_identifier: this.entry.secondary_identifier || null,
           owning_institution: this.entry.owning_institution || null,
+          volume_description: this.entry.volume_description || null,
+          scan_site: this.entry.scan_site || null,
         };
-
+        console.log(payload);
         const res = await fetch(`${API_BASE}/entries`, {
           method: "POST",
           headers: {

@@ -1,4 +1,5 @@
 <template>
+
   <div>
     <form @submit.prevent="search" class="fsrm-search">
       <select v-model="searchType">
@@ -81,6 +82,13 @@
             <input
               id="secondary_identifier"
               v-model.trim="form.secondary_identifier"
+            />
+          </li>
+          <li>
+            <label for="volume_description">Volume description:</label>
+            <input
+              id="volume_description"
+              v-model.trim="form.volume_description"
             />
           </li>
           <li>
@@ -218,6 +226,7 @@
             <label for="images_sent_date">Image sent date:</label>
             <input
               id="images_sent_date"
+              type="date"
               v-model.trim="form.images_sent_date"
               @focus="setToday('images_sent_date')"
             />
@@ -295,7 +304,28 @@ export default {
       this.savedAt = null;
       this.form = {
         secondary_identifier: entry.secondary_identifier || "",
+        volume_description: entry.volume_description || "",
+        owning_institution: entry.owning_institution || "",
+        access: entry.access || "",
         number_of_pages: entry.number_of_pages || "",
+
+        md_date: entry.md_date || "",
+        md_by: entry.md_by || "",
+
+        scan_site: entry.scan_site || "",
+        scan_operator_by: entry.scan_operator_by || "",
+        scan_machine: entry.scan_machine || "",
+        scan_date: entry.scan_date || "",
+        scan_site_notes: entry.scan_site_notes || "",
+        scanned_image_count: entry.scanned_image_count || "",
+
+        image_auditor_1_by: entry.image_auditor_1_by || "",
+        audit_date_1: entry.audit_date_1 || "",
+        image_auditor_2_by: entry.image_auditor_2_by || "",
+        audit_date_2: entry.audit_date_2 || "",
+
+        images_sent_by: entry.images_sent_by || "",
+        images_sent_date: entry.images_sent_date || "",
       };
     },
     async save() {
@@ -305,16 +335,28 @@ export default {
       try {
         const payload = {
           secondary_identifier: this.form.secondary_identifier || null,
+          owning_institution: this.form.owning_institution || null,
+          volume_description: this.form.volume_description || null,
+          access: this.form.access || null,
           number_of_pages: this.form.number_of_pages || null,
 
           md_date: this.form.md_date || null,
           md_by: this.form.md_by || null,
+
           scan_site: this.form.scan_site || null,
           scan_operator_by: this.form.scan_operator_by || null,
           scan_machine: this.form.scan_machine || null,
           scan_date: this.form.scan_date || null,
           scan_site_notes: this.form.scan_site_notes || null,
           scanned_image_count: this.form.scanned_image_count || null,
+
+          image_auditor_1_by: this.form.image_auditor_1_by || null,
+          audit_date_1: this.form.audit_date_1 || null,
+          image_auditor_2_by: this.form.image_auditor_2_by || null,
+          audit_date_2: this.form.audit_date_2 || null,
+
+          images_sent_by: this.form.images_sent_by || null,
+          images_sent_date: this.form.images_sent_date || null,
         };
         console.log("PUT", this.selected.entry_id, JSON.stringify(payload));
         const res = await fetch(
