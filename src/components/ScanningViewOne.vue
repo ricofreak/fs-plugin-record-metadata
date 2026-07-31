@@ -1,7 +1,7 @@
 <template>
   <div>
     <form @submit.prevent="search" class="fsrm-search">
-      <select>
+      <select v-model="searchType">
         <option value="biblionumber">TN (biblionumber)</option>
         <option value="barcode">Barcode</option>
       </select>

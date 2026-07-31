@@ -12,12 +12,12 @@ our $VERSION = "0.0.1";
 
 our $metadata = {
     name             => 'Family Search Record Metadata Plugin',
-    author           => 'Lucas Gass',
+    author           => 'ByWater Solutions',
     description      => 'Family Search Koha Record Metadata plugin',
     date_authored    => '2026-07-13',
     date_updated     => '2026-07-13',
     minimum_version  => '25.1100000',
-    maximum_version  => '25.1199000',
+    maximum_version  => '28.1199000',
     version          => $VERSION,
 };
 
