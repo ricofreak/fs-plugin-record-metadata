@@ -155,7 +155,7 @@
           </li>
           <li>
             <label for="review_by">Published image review by:</label>
-            <input id="review_by" type="date" v-model.trim="form.review_by" />
+            <input id="review_by" type="date" v-model.trim="form.review_by" @focus="setToday('review_by')" />
           </li>
           <li>
             <label for="review_start_date">Review start date:</label>
@@ -236,6 +236,9 @@
           {{ saving ? "Saving…" : "Save" }}
         </button>
         <span v-if="savedAt" class="fsrm-saved">Saved.</span>
+        <button class="btn btn-primary" type="button" @click="saveAndBack" :disabled="saving">
+            {{ saving ? "Saving…" : "Save and back to step 1" }}
+        </button>
       </fieldset>
     </div>
   </div>
@@ -405,11 +408,20 @@ export default {
         if (idx !== -1) this.entries.splice(idx, 1, updated);
         this.selected = updated;
         this.savedAt = Date.now();
+        return updated;
       } catch (e) {
         this.error = e.message;
+        return null;
       } finally {
         this.saving = false;
       }
+    },
+    async saveAndBack() {
+      console.log("WE HERE");
+      const updated = await this.save();
+      if (!updated) return;
+      this.$emit("saved", updated);   // Main sets this.entry = updated
+      this.$emit("step", 1);
     },
   },
 };

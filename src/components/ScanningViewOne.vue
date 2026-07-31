@@ -150,6 +150,7 @@
               v-model.trim="form.md_date"
               @focus="setToday('md_date')"
             />
+            <a type="button" class="clear_date fa fa-fw fa-times" aria-hidden="true" aria-label="Clear date" @click="clearDate('md_date')"></a>
           </li>
           <li>
             <label for="scan_site">Scan site:</label>
@@ -235,17 +236,17 @@
       </fieldset>
 
       <fieldset class="action">
+        <div class="btn-toolbar">
         <button class="btn btn-primary" :disabled="saving" @click="save">
           {{ saving ? "Saving…" : "Save" }}
         </button>
-        <span v-if="savedAt" class="fsrm-saved">Saved.</span>
+          <button class="btn btn-primary" type="button" @click="saveAndGo" :disabled="saving">
+            {{ saving ? "Saving…" : "Save and continue to step 2" }}
+          </button>
+          <p v-if="error" class="error" role="alert">{{ error }}</p>
+          <span v-if="savedAt" class="fsrm-saved">Saved.</span>
+        </div>
       </fieldset>
-    <div class="action">
-      <button type="button" @click="saveAndGo" :disabled="saving">
-        {{ saving ? "Saving…" : "Save and continue to step 2 →" }}
-      </button>
-      <p v-if="error" class="error" role="alert">{{ error }}</p>
-    </div>
     </div>
   </div>
 </template>
@@ -413,6 +414,10 @@ export default {
       if (!updated) return;
       this.$emit("saved", updated);   // Main sets this.entry = updated
       this.$emit("step", 2);
+    },
+    clearDate(field) {
+      this.form[field] = "";
+      this.names[field] = "";
     },
   },
 };
