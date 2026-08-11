@@ -147,6 +147,29 @@ sub list_problems {
     };
 }
 
+sub create_problem {
+    my $c = shift->openapi->valid_input or return;
+
+    my $body = $c->validation->param('body');
+
+    return try {
+        my $plugin = Koha::Plugin::Com::ByWaterSolutions::FSRecordMetadata->new;
+
+        my $entry = $plugin->search_entries( { entry_id => $body->{entry_id} } );
+        unless ( $entry->{total} ) {
+            return $c->render( status => 404, openapi => { error => "Entry not found" } );
+        }
+
+        my $problem_id = $plugin->create_problem($body);
+        my $result = $plugin->search_problems( { problem_id => $problem_id } );
+
+        return $c->render( status => 201, openapi => $result->{problems}->[0] );
+    }
+    catch {
+        return $c->render( status => 500, openapi => { error => "Something went wrong: $_" } );
+    };
+}
+
 sub check_dtn {
     my $c = shift->openapi->valid_input or return;
 

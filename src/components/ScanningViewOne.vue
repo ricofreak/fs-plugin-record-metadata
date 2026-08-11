@@ -104,7 +104,7 @@
           </li>
           <li>
             <label for="add_problem">Add problems:</label>
-            <button id="add_problem">+ Add</button>
+            <button type="button" id="add_problem" @click="showProblemsModal=true">+ Add</button>
           </li>
           <li>
             <label for="owning_institution">Owning Institution:</label>
@@ -255,10 +255,19 @@
         </div>
       </fieldset>
     </div>
+    <ProblemsModal
+      v-if="showProblemsModal && selected"
+      :entry-id="selected.entry_id"
+      :dtn="selected.dtn"
+      @saved="onProblemSaved"
+      @cancel="showProblemsModal = false"
+    />
   </div>
 </template>
 
 <script>
+import ProblemsModal from './ProblemsModal.vue';
+
 const API_BASE = "/api/v1/contrib/fsrecordmetadata";
 
 export default {
@@ -266,6 +275,7 @@ export default {
   props: {
     entry: { type: Object, default: null },
   },
+  components: { ProblemsModal },
   data() {
     return {
       searchType: "biblionumber",
@@ -278,6 +288,7 @@ export default {
       saving: false,
       savedAt: null,
       error: null,
+      showProblemsModal: false,
     };
   },
   created() {
@@ -299,6 +310,10 @@ export default {
     },
   },
   methods: {
+    async onProblemSaved() {
+      this.showProblemsModal = false;
+      await this.search(); // update on save
+    },
     setToday(field) {
       if (this.form[field]) return; // if we already have a date, bail
       const d = new Date();

@@ -73,6 +73,19 @@ our %ENTRY_COLUMNS = (
     images_removed_notes => 'string',
 );
 
+our %PROBLEM_COLUMNS = (
+    entry_id       => 'integer',
+    step           => 'string',
+    status         => 'string',
+    reason         => 'string',
+    description    => 'string',
+    problem_date   => 'string',
+    reported_by    => 'integer',
+    initials       => 'string',
+    solution_owner => 'integer',
+    resolved_on    => 'string',
+);
+
 our %CREATE_ONLY_COLUMNS = (
     biblionumber => 'integer',
     dtn          => 'string',
@@ -413,6 +426,37 @@ sub search_problems {
     );
 
     return { problems => $rows, total => $total };
+}
+
+sub create_problem {
+    my ( $self, $params ) = @_;
+
+    my $table = $self->get_qualified_table_name('problems');
+    my $dbh   = C4::Context->dbh;
+
+    my $userenv = C4::Context->userenv;
+    my $user_id = $userenv ? $userenv->{number} : undef;
+
+    my ( @names, @placeholders, @binds );
+    for my $col ( keys %PROBLEM_COLUMNS ) {
+        next unless exists $params->{$col};
+        push @names,        $col;
+        push @placeholders, '?';
+        push @binds,        $params->{$col};
+    }
+
+    push @names, 'created_user', 'updated_user';
+    push @placeholders, '?', '?';
+    push @binds, $user_id, $user_id;
+
+    my $sql = sprintf(
+        "INSERT INTO `%s` (%s) VALUES (%s)",
+        $table, join( ', ', @names ), join( ', ', @placeholders )
+    );
+
+    $dbh->do( $sql, undef, @binds );
+
+    return $dbh->last_insert_id( undef, undef, $table, undef );
 }
 
 sub get_record_details {

@@ -263,6 +263,45 @@
             "x-koha-authorization": {
                 "permissions": { "catalogue": "1" }
             }
+        },
+        "post": {
+            "x-mojo-to": "Com::ByWaterSolutions::FSRecordMetadata::Controller#create_problem",
+            "operationId": "fsrmCreateProblem",
+            "tags": ["fsrecordmetadata"],
+            "consumes": ["application/json"],
+            "produces": ["application/json"],
+            "parameters": [
+                {
+                    "name": "body",
+                    "in": "body",
+                    "required": true,
+                    "schema": {
+                        "type": "object",
+                        "properties": {
+                            "entry_id":       { "type": "integer" },
+                            "step":           { "type": ["string", "null"] },
+                            "status":         { "type": ["string", "null"] },
+                            "reason":         { "type": ["string", "null"] },
+                            "description":    { "type": ["string", "null"] },
+                            "problem_date":   { "type": ["string", "null"] },
+                            "initials":       { "type": ["string", "null"] },
+                            "reported_by":    { "type": ["integer", "null"] },
+                            "solution_owner": { "type": ["integer", "null"] }
+                        },
+                        "required": ["entry_id"],
+                        "additionalProperties": false
+                    }
+                }
+            ],
+            "responses": {
+                "201": { "description": "Problem created", "schema": { "type": "object" } },
+                "400": { "description": "Bad request", "schema": { "type": "object", "properties": { "error": { "type": "string" } } } },
+                "404": { "description": "Entry not found", "schema": { "type": "object", "properties": { "error": { "type": "string" } } } },
+                "500": { "description": "Internal server error", "schema": { "type": "object", "properties": { "error": { "type": "string" } } } }
+            },
+            "x-koha-authorization": {
+                "permissions": { "editcatalogue": "edit_catalogue" }
+            }
         }
     }
 }
