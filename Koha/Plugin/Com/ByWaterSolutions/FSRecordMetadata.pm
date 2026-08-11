@@ -459,6 +459,33 @@ sub create_problem {
     return $dbh->last_insert_id( undef, undef, $table, undef );
 }
 
+sub update_problem {
+    my ( $self, $problem_id, $params ) = @_;
+
+    my $table = $self->get_qualified_table_name('problems');
+    my $dbh   = C4::Context->dbh;
+
+    my $userenv = C4::Context->userenv;
+    my $user_id = $userenv ? $userenv->{number} : undef;
+
+    my ( @sets, @binds );
+    for my $col ( keys %PROBLEM_COLUMNS ) {
+        next if $col eq 'entry_id';          # auto-incremented, skip it
+        next unless exists $params->{$col};
+        push @sets,  "$col = ?";
+        push @binds, $params->{$col};
+    }
+
+    return 0 unless @sets;
+
+    push @sets,  'updated_user = ?';
+    push @binds, $user_id;
+
+    my $sql = sprintf( "UPDATE `%s` SET %s WHERE problem_id = ?", $table, join( ', ', @sets ) );
+
+    return $dbh->do( $sql, undef, @binds, $problem_id );
+}
+
 sub get_record_details {
     my ( $self, $params ) = @_;
 
