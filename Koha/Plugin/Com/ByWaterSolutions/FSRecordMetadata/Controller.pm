@@ -124,6 +124,29 @@ sub update_entry {
     };
 }
 
+sub list_problems {
+    my $c = shift->openapi->valid_input or return;
+
+    my $status   = $c->validation->param('status');
+    my $entry_id = $c->validation->param('entry_id');
+    my $page     = $c->validation->param('_page');
+    my $per_page = $c->validation->param('_per_page');
+
+    return try {
+        my $plugin = Koha::Plugin::Com::ByWaterSolutions::FSRecordMetadata->new;
+        my $result = $plugin->search_problems(
+            { status => $status, entry_id => $entry_id },
+            { page   => $page,   per_page => $per_page }
+        );
+
+        $c->res->headers->add( 'X-Total-Count' => $result->{total} );
+        return $c->render( status => 200, openapi => $result->{problems} );
+    }
+    catch {
+        return $c->render( status => 500, openapi => { error => "Something went wrong: $_" } );
+    };
+}
+
 sub check_dtn {
     my $c = shift->openapi->valid_input or return;
 

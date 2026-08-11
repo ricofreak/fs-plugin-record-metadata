@@ -17,6 +17,7 @@
       @step="onStep"
       @cancel="closeEntry"
     />
+    <ProblemsView v-if="view === 'problems'" />
   </div>
 </template>
 
@@ -25,10 +26,11 @@ import SearchView from "./SearchView.vue";
 import CreateView from "./CreateView.vue";
 import ScanningViewOne from "./ScanningViewOne.vue";
 import ScanningViewTwo from "./ScanningViewTwo.vue";
+import ProblemsView from "./ProblemsView.vue";
 
 export default {
   name: "Main",
-  components: { SearchView, CreateView, ScanningViewOne, ScanningViewTwo },
+  components: { SearchView, CreateView, ScanningViewOne, ScanningViewTwo, ProblemsView },
   data() {
     return { view: "search", entry: null };
   },

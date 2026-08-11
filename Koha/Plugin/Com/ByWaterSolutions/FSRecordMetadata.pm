@@ -353,6 +353,65 @@ sub update_entry {
     return $dbh->do( $sql, undef, @binds, $entry_id );
 }
 
+sub search_problems {
+    my ( $self, $filters, $opts ) = @_;
+    $filters //= {};
+    $opts    //= {};
+
+    my $page     = $opts->{page}     || 1;
+    my $per_page = $opts->{per_page} || 50;
+    $per_page = 100 if $per_page > 100;
+    $page     = 1   if $page < 1;
+
+    my $problems_table = $self->get_qualified_table_name('problems');
+    my $entries_table  = $self->get_qualified_table_name('entries');
+    my $dbh            = C4::Context->dbh;
+
+    my %columns = (
+        problem_id => 'p.problem_id',
+        entry_id   => 'p.entry_id',
+        status     => 'p.status',
+        step       => 'p.step',
+    );
+
+    my ( @where, @binds );
+    for my $key ( keys %columns ) {
+        next unless defined $filters->{$key};
+        push @where, "$columns{$key} = ?";
+        push @binds, $filters->{$key};
+    }
+    my $where = @where ? 'WHERE ' . join( ' AND ', @where ) : '';
+
+    my $from = qq{
+        FROM `$problems_table` p
+        JOIN `$entries_table` e ON e.entry_id = p.entry_id
+        JOIN biblio b ON b.biblionumber = e.biblionumber
+        $where
+    };
+
+    my ($total) = $dbh->selectrow_array( "SELECT COUNT(*) $from", undef, @binds );
+
+    my $offset = ( $page - 1 ) * $per_page;
+    my $rows   = $dbh->selectall_arrayref(
+        qq{
+            SELECT p.*,
+                   e.dtn,
+                   e.biblionumber,
+                   e.ocr_site,
+                   e.scan_date,
+                   b.title,
+                   b.author
+            $from
+            ORDER BY p.problem_id DESC
+            LIMIT ? OFFSET ?
+        },
+        { Slice => {} },
+        @binds, $per_page, $offset
+    );
+
+    return { problems => $rows, total => $total };
+}
+
 sub get_record_details {
     my ( $self, $params ) = @_;
 
