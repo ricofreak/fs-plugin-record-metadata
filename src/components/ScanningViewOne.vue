@@ -92,19 +92,19 @@
             />
           </li>
           <li>
-              <label>Problem number(s):</label>
-              <span v-if="!problemList.length">None</span>
-              <span v-else>
-                <span
-                  v-for="(p, idx) in problemList"
-                  :key="p.id"
-                  :class="p.open ? 'fsrm-problem-open' : 'fsrm-problem-closed'"
-                >{{ p.id }}<span v-if="idx < problemList.length - 1">, </span></span>
-              </span>
+            <label>Problem number(s):</label>
+            <span v-if="!problemList.length">None</span>
+            <span v-else>
+              <span v-for="(p, idx) in problemList" :key="p.id">
+                <a href="#"
+                :class="p.open ? 'fsrm-problem-open' : 'fsrm-problem-closed'"
+                @click.prevent="editProblem(p.id)"
+              >{{ p.id }}</a><span v-if="idx < problemList.length - 1">, </span></span>
+            </span>
           </li>
           <li>
             <label for="add_problem">Add problems:</label>
-            <button type="button" id="add_problem" @click="showProblemsModal=true">+ Add</button>
+            <button type="button" id="add_problem" @click="addProblem">+ Add</button>
           </li>
           <li>
             <label for="owning_institution">Owning Institution:</label>
@@ -259,6 +259,7 @@
       v-if="showProblemsModal && selected"
       :entry-id="selected.entry_id"
       :dtn="selected.dtn"
+      :problem-id="editingProblemId"
       @saved="onProblemSaved"
       @cancel="showProblemsModal = false"
     />
@@ -310,9 +311,20 @@ export default {
     },
   },
   methods: {
+    editProblem(problemId) {
+      this.editingProblemId = Number(problemId);
+      this.showProblemsModal = true;
+    },
+    addProblem() {
+      this.editingProblemId = null;
+      this.showProblemsModal = true;
+    },
     async onProblemSaved() {
+      const entryId = this.selected.entry_id;
       this.showProblemsModal = false;
       await this.search(); // update on save
+      const again = this.entries.find((e) => e.entry_id === entryId);
+      if (again) this.select(again);
     },
     setToday(field) {
       if (this.form[field]) return; // if we already have a date, bail
