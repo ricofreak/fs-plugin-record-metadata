@@ -32,8 +32,8 @@ export default {
       const all = [
         { id: "search", label: "Search" },
         { id: "new", label: "New +" },
-        { id: "create", label: "Scanning/processing (1)", requires: "canEdit" },
-        { id: "create2", label: "Scanning/processing (2)", requires: "canEdit" },
+        { id: "create", label: "Scanning/processing (1)" },
+        { id: "create2", label: "Scanning/processing (2)"},
         { id: "problems", label: "Problems" },
         { id: "reports", label: "Queues/reports" },
         { id: "admin", label: "Admin", requires: "canEdit" },

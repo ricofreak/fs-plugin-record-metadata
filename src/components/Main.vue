@@ -4,14 +4,14 @@
     <SearchView v-if="view === 'search'" @select="openEntry" />
     <CreateView v-if="view === 'new'" @created="openEntry" />
     <ScanningViewOne
-      v-if="view === 'create' && canEdit"
+      v-if="view === 'create'"
       :entry="entry"
       @saved="onSaved"
       @step="onStep"
       @cancel="closeEntry"
     />
     <ScanningViewTwo
-      v-if="view === 'create2' && canEdit"
+      v-if="view === 'create2'"
       :entry="entry"
       @saved="onSaved"
       @step="onStep"
@@ -33,11 +33,6 @@ export default {
   components: { SearchView, CreateView, ScanningViewOne, ScanningViewTwo, ProblemsView },
   data() {
     return { view: "search", entry: null };
-  },
-  computed: {
-    canEdit() {
-      return (window.fsrmPermissions || {}).canEdit === true;
-    },
   },
   methods: {
     openEntry(entry) {
