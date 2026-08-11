@@ -117,7 +117,14 @@ export default {
           }
         },
         columns: [
-          { data: "problem_id", defaultContent: "" },
+          { data: "problem_numbers", defaultContent: "", render: (d) => {
+              if (!d) return "";
+              return d.split(",").map((chunk) => {
+                const [id, open] = chunk.split(":");
+                const cls = open === "1" ? "fsrm-problem-open" : "fsrm-problem-closed";
+                return `<span class="${cls}">${id}</span>`;
+              }).join(", ");
+          } },
           { data: "biblionumber" },
           { data: "dtn", defaultContent: "" },
           {

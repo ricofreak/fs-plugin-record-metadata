@@ -281,8 +281,11 @@ sub search_entries {
                     FROM items i WHERE i.biblionumber = e.biblionumber) AS callnumbers,
                    (SELECT GROUP_CONCAT(DISTINCT i.itype SEPARATOR ', ')
                     FROM items i WHERE i.biblionumber = e.biblionumber) AS itypes,
-                   (SELECT MAX(p.problem_id) FROM `$problems_table` p
-                    WHERE p.entry_id = e.entry_id) AS problem_id
+                   (SELECT GROUP_CONCAT(
+                        CONCAT(p.problem_id, ':', IF(p.resolved_on IS NULL, '1', '0'))
+                        ORDER BY p.problem_id SEPARATOR ',')
+                    FROM `$problems_table` p
+                    WHERE p.entry_id = e.entry_id) AS problem_numbers
             $from
             ORDER BY e.entry_id DESC
             LIMIT ? OFFSET ?

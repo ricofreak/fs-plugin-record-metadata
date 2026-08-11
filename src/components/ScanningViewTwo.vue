@@ -92,8 +92,15 @@
             />
           </li>
           <li>
-            <label for="problem_numbers">Problem number(s):</label>
-            <input id="problem_numbers" v-model.trim="form.problem_numbers" />
+              <label>Problem number(s):</label>
+              <span v-if="!problemList.length">None</span>
+              <span v-else>
+                <span
+                  v-for="(p, idx) in problemList"
+                  :key="p.id"
+                  :class="p.open ? 'fsrm-problem-open' : 'fsrm-problem-closed'"
+                >{{ p.id }}<span v-if="idx < problemList.length - 1">, </span></span>
+              </span>
           </li>
           <li>
             <label for="add_problem">Add problems:</label>
@@ -276,6 +283,15 @@ export default {
       if (val) this.select(val);
     },
   },
+  computed: {
+    problemList() {
+      if (!this.selected || !this.selected.problem_numbers) return [];
+      return this.selected.problem_numbers.split(',').map((chunk) => {
+        const [id, open] = chunk.split(':');
+        return { id, open: open === '1' };
+      });
+    },
+  },
   methods: {
     setToday(field) {
       if (this.form[field]) return; // if we already have a date, bail
@@ -431,4 +447,6 @@ export default {
   display: grid;
   grid-template-columns: 1fr 1fr 1fr;
 }
+.fsrm-problem-open   { color: #c00; font-weight: bold; }
+.fsrm-problem-closed { color: #418940; font-weight: bold; }
 </style>
