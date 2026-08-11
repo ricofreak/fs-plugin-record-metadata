@@ -26,5 +26,11 @@
     </div>
   </div>
 </div>
+<script nonce="[% Koha.CSPNonce | $raw %]" data-tt-allowed="true">
+  window.fsrmUser = {
+    borrowernumber: [% current_user_id %],
+    name: "[% current_user_name | html %]"
+  };
+</script>
 <script src="/api/v1/contrib/fsrecordmetadata/static/dist/fsrecordmetadata.js"></script>
 [% INCLUDE 'intranet-bottom.inc' %]

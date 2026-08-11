@@ -166,6 +166,8 @@
           <li>
             <label for="scan_operator_by">Scan operator:</label>
             <input id="scan_operator_by" v-model.trim="form.scan_operator_by" />
+            <a type="button" class="pick_me fa fa-fw fa-hand" aria-hidden="true" aria-label="Set Scan operator to current user" @click="setMe('scan_operator_by')"></a>
+            <span v-if="names.scan_operator_by" class="hint">{{ names.scan_operator_by }}</span>
           </li>
           <li>
             <label for="scan_machine">Scan machine #:</label>
@@ -290,12 +292,12 @@ export default {
       savedAt: null,
       error: null,
       showProblemsModal: false,
+      names: {},
     };
   },
   created() {
     if (this.entry) this.select(this.entry);
   },
-
   watch: {
     entry(val) {
       if (val) this.select(val);
@@ -334,6 +336,12 @@ export default {
         .slice(0, 10);
       this.form[field] = iso;
     },
+    setMe(field) {
+      const u = window.fsrmUser || {};
+      if (!u.borrowernumber) return;
+      this.form[field] = u.borrowernumber;
+      this.names[field] = u.name;
+    },
     async search() {
       this.loading = true;
       this.error = null;
@@ -364,6 +372,7 @@ export default {
     select(entry) {
       this.selected = entry;
       this.savedAt = null;
+      this.names = {};
       this.form = {
         secondary_identifier: entry.secondary_identifier || "",
         volume_description: entry.volume_description || "",

@@ -227,7 +227,12 @@ sub tool {
     my $cgi = $self->{cgi};
 
     my $template = $self->get_template({ file => 'tool.tt' });
-
+    my $userenv = C4::Context->userenv;
+    warn 'CHECKING BORROWERNUMBER: ' . Data::Dumper::Dumper( $userenv->{number} );
+    $template->param(
+        current_user_id   => $userenv->{number},
+        current_user_name => $userenv ? ( $userenv->{firstname} . ' ' . $userenv->{surname} ) : '',
+    );
     $self->output_html( $template->output() );
 }
 

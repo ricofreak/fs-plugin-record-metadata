@@ -36,10 +36,9 @@ export default {
         { id: "create2", label: "Scanning/processing (2)"},
         { id: "problems", label: "Problems" },
         { id: "reports", label: "Queues/reports" },
-        { id: "admin", label: "Admin", requires: "canEdit" },
+        { id: "admin", label: "Admin" },
       ];
-      const perms = window.fsrmPermissions || {};
-      return all.filter((i) => !i.requires || perms[i.requires]);
+      return all;
     },
   },
 };
