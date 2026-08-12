@@ -574,6 +574,42 @@ sub get_record_details {
     };
 }
 
+sub search_staff {
+    my ( $self, $params ) = @_;
+
+    my $term = $params->{q} // '';
+    return [] unless length($term) >= 2;
+
+    my $like = $term . '%';
+
+    my $patrons = Koha::Patrons->search(
+        {
+            'category.category_type' => 'S',
+            -or                      => [
+                surname   => { -like => $like },
+                firstname => { -like => $like },
+                userid    => { -like => $like },
+            ],
+        },
+        {
+            join     => 'category',
+            order_by => [ 'surname', 'firstname' ],
+            rows     => 20,
+        }
+    );
+
+    return [
+        map {
+            {
+                borrowernumber => $_->borrowernumber,
+                surname        => $_->surname,
+                firstname      => $_->firstname,
+                userid         => $_->userid,
+            }
+        } $patrons->as_list
+    ];
+}
+
 sub static_routes {
     my ( $self, $args ) = @_;
 

@@ -195,6 +195,20 @@ sub update_problem {
     };
 }
 
+sub list_staff {
+    my $c = shift->openapi->valid_input or return;
+
+    my $q = $c->validation->param('q');
+
+    return try {
+        my $plugin = Koha::Plugin::Com::ByWaterSolutions::FSRecordMetadata->new;
+        return $c->render( status => 200, openapi => $plugin->search_staff( { q => $q } ) );
+    }
+    catch {
+        return $c->render( status => 500, openapi => { error => "Something went wrong: $_" } );
+    };
+}
+
 sub check_dtn {
     my $c = shift->openapi->valid_input or return;
 

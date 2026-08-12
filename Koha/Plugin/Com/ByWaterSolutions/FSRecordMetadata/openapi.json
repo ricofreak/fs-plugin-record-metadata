@@ -345,5 +345,33 @@
                 "permissions": { "editcatalogue": "edit_catalogue" }
             }
         }
+    },
+    "/staff": {
+        "get": {
+            "x-mojo-to": "Com::ByWaterSolutions::FSRecordMetadata::Controller#list_staff",
+            "operationId": "fsrmListStaff",
+            "tags": ["fsrecordmetadata"],
+            "produces": ["application/json"],
+            "parameters": [
+                { "name": "q", "in": "query", "required": false, "type": "string" }
+            ],
+            "responses": {
+                "200": {
+                    "description": "Matching staff",
+                    "schema": { "type": "array", "items": { "type": "object" } }
+                },
+                "403": {
+                    "description": "Access forbidden",
+                    "schema": { "type": "object", "properties": { "error": { "type": "string" } } }
+                },
+                "500": {
+                    "description": "Internal server error",
+                    "schema": { "type": "object", "properties": { "error": { "type": "string" } } }
+                }
+            },
+            "x-koha-authorization": {
+                "permissions": { "borrowers": "list_borrowers" }
+            }
+        }
     }
 }
