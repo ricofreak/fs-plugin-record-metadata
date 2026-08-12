@@ -79,7 +79,7 @@
           </li>
           <li>
             <label for="scan_operator_by">Scan operator:</label>
-            <input id="scan_operator_by" v-model.trim="form.scan_operator_by" />
+            <StaffPicker id="scan_operator_by" label="Scan operator" v-model="form.scan_operator_by" v-model:displayName="names.scan_operator_by" />
           </li>
           <li>
             <label for="scan_machine">Scan machine #:</label>
@@ -99,7 +99,7 @@
           </li>
           <li style="margin-top: 1em">
             <label for="image_auditor_1_by">Image auditor 1:</label>
-            <input id="image_auditor_1_by" v-model.trim="form.image_auditor_1_by" />
+            <StaffPicker id="image_auditor_1_by" label="Image auditor 1" v-model="form.image_auditor_1_by" v-model:displayName="names.image_auditor_1_by" />
           </li>
           <li>
             <label for="audit_date_1">Audit 1 date:</label>
@@ -107,7 +107,7 @@
           </li>
           <li>
             <label for="image_auditor_2_by">Image auditor 2:</label>
-            <input id="image_auditor_2_by" v-model.trim="form.image_auditor_2_by" />
+            <StaffPicker id="image_auditor_2_by" label="Image auditor 2" v-model="form.image_auditor_2_by" v-model:displayName="names.image_auditor_2_by" />
           </li>
           <li>
             <label for="audit_date_2">Audit 2 date:</label>
@@ -115,7 +115,7 @@
           </li>
           <li style="margin-top: 1em">
             <label for="images_sent_by">Image sent by:</label>
-            <input id="images_sent_by" v-model.trim="form.images_sent_by" />
+            <StaffPicker id="images_sent_by" label="Image sent by" v-model="form.images_sent_by" v-model:displayName="names.images_sent_by" />
           </li>
           <li>
             <label for="images_sent_date">Image sent date:</label>
@@ -132,10 +132,11 @@ import ScanningForm from "./ScanningForm.vue";
 import ProblemNumbers from "./ProblemNumbers.vue";
 
 import DateField from "./DateField.vue";
+import StaffPicker from "./StaffPicker.vue";
 
 export default {
   name: "ScanningViewOne",
-  components: { ScanningForm, ProblemNumbers, DateField },
+  components: { ScanningForm, ProblemNumbers, DateField, StaffPicker },
   props: { entry: { type: Object, default: null } },
   emits: ["saved", "step"],
   data() {

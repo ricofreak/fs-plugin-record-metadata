@@ -92,7 +92,7 @@
           </li>
           <li>
             <label for="review_by">Published image review by:</label>
-            <input id="review_by" v-model.trim="form.review_by" />
+            <StaffPicker id="review_by" label="Published image review by" v-model="form.review_by" v-model:displayName="names.review_by" />
           </li>
           <li>
             <label for="review_start_date">Review start date:</label>
@@ -155,7 +155,7 @@
           </li>
           <li>
             <label for="images_removed_by">Image removal request by:</label>
-            <input id="images_removed_by" v-model.trim="form.images_removed_by" />
+            <StaffPicker id="images_removed_by" label="Image removal request by" v-model="form.images_removed_by" v-model:displayName="names.images_removed_by" />
           </li>
           <li>
             <label for="images_removed_date">Image removal date:</label>
