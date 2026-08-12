@@ -247,6 +247,7 @@
             "parameters": [
                 { "name": "status",    "in": "query", "required": false, "type": "string" },
                 { "name": "entry_id",  "in": "query", "required": false, "type": "integer" },
+                { "name": "problem_id", "in": "query", "required": false, "type": "integer" },
                 { "name": "_page",     "in": "query", "required": false, "type": "integer" },
                 { "name": "_per_page", "in": "query", "required": false, "type": "integer" }
             ],

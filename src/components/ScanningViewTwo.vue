@@ -93,14 +93,7 @@
           </li>
           <li>
             <label>Problem number(s):</label>
-            <span v-if="!problemList.length">None</span>
-            <span v-else>
-              <span v-for="(p, idx) in problemList" :key="p.id">
-                <a href="#"
-                :class="p.open ? 'fsrm-problem-open' : 'fsrm-problem-closed'"
-                @click.prevent="editProblem(p.id)"
-              >{{ p.id }}</a><span v-if="idx < problemList.length - 1">, </span></span>
-            </span>
+            <ProblemNumbers :value="selected.problem_numbers" @edit="editProblem" />
           </li>
           <li>
             <label for="add_problem">Add problems:</label>
@@ -261,6 +254,7 @@
 
 <script>
 import ProblemsModal from './ProblemsModal.vue';
+import ProblemNumbers from './ProblemNumbers.vue';
 import { getEntries, updateEntry } from "../api";
 
 const toDateInput = (v) => (v ? String(v).slice(0, 10) : "");
@@ -270,7 +264,7 @@ export default {
   props: {
     entry: { type: Object, default: null },
   },
-  components: { ProblemsModal },
+  components: { ProblemsModal, ProblemNumbers },
   data() {
     return {
       searchType: "biblionumber",
@@ -292,15 +286,6 @@ export default {
   watch: {
     entry(val) {
       if (val) this.select(val);
-    },
-  },
-  computed: {
-    problemList() {
-      if (!this.selected || !this.selected.problem_numbers) return [];
-      return this.selected.problem_numbers.split(',').map((chunk) => {
-        const [id, open] = chunk.split(':');
-        return { id, open: open === '1' };
-      });
     },
   },
   methods: {
