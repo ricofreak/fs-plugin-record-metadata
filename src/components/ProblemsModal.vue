@@ -57,7 +57,7 @@
 </template>
 
 <script>
-const API_BASE = '/api/v1/contrib/fsrecordmetadata';
+import { getProblems, createProblem, updateProblem } from "../api";
 
 export default {
   name: 'ProblemModal',
@@ -71,12 +71,8 @@ export default {
   },
   async created() {
     if (!this.isEdit) return;
-    const res = await fetch(`${API_BASE}/problems?problem_id=${this.problemId}`, {
-      headers: { Accept: 'application/json' },
-      credentials: 'same-origin',
-    });
-    if (res.ok) {
-      const rows = await res.json();
+    try {
+      const rows = await getProblems({ problem_id: this.problemId });
       if (rows.length) {
         const p = rows[0];
         this.form = {
@@ -89,6 +85,8 @@ export default {
           resolved_on: p.resolved_on || '',
         };
       }
+    } catch (e) {
+      this.error = e.message;
     }
   },
   emits: ['saved', 'cancel'],
@@ -118,27 +116,19 @@ export default {
       this.saving = true;
       this.error = null;
       try {
-        const url = this.isEdit ? `${API_BASE}/problems/${this.problemId}` : `${API_BASE}/problems`;
-        const method = this.isEdit ? 'PUT' : 'POST';
-
         const payload = {};
         for (const [k, v] of Object.entries(this.form)) payload[k] = v === '' ? null : v;
-        if (!this.isEdit) {
+
+        let result;
+        if (this.isEdit) {
+          result = await updateProblem(this.problemId, payload);
+        } else {
           payload.entry_id = this.entryId;
           delete payload.resolved_on;
+          result = await createProblem(payload);
         }
 
-        const res = await fetch(url, {
-          method,
-          headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
-          credentials: 'same-origin',
-          body: JSON.stringify(payload),
-        });
-        if (!res.ok) {
-          const body = await res.json().catch(() => ({}));
-          throw new Error(body.error || `Save failed (${res.status})`);
-        }
-        this.$emit('saved', await res.json());
+        this.$emit('saved', result);
       } catch (e) {
         this.error = e.message;
       } finally {

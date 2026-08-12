@@ -270,8 +270,7 @@
 
 <script>
 import ProblemsModal from './ProblemsModal.vue';
-
-const API_BASE = "/api/v1/contrib/fsrecordmetadata";
+import { getEntries, updateEntry } from "../api";
 
 export default {
   name: "ScanningViewOne",
@@ -347,20 +346,8 @@ export default {
       this.error = null;
       this.entries = [];
       this.selected = null;
-      this.savedAt = null;
       try {
-        const params = new URLSearchParams({
-          [this.searchType]: this.searchTerm,
-        });
-        const res = await fetch(`${API_BASE}/entries?${params}`, {
-          headers: { Accept: "application/json" },
-          credentials: "same-origin",
-        });
-        if (!res.ok) {
-          const body = await res.json().catch(() => ({}));
-          throw new Error(body.error || `Search failed (${res.status})`);
-        }
-        this.entries = await res.json();
+        this.entries = await getEntries({ [this.searchType]: this.searchTerm });
         if (this.entries.length === 1) this.select(this.entries[0]);
       } catch (e) {
         this.error = e.message;
@@ -429,29 +416,11 @@ export default {
           images_sent_by: this.form.images_sent_by || null,
           images_sent_date: this.form.images_sent_date || null,
         };
-        console.log("PUT", this.selected.entry_id, JSON.stringify(payload));
-        const res = await fetch(
-          `${API_BASE}/entries/${this.selected.entry_id}`,
-          {
-            method: "PUT",
-            headers: {
-              "Content-Type": "application/json",
-              Accept: "application/json",
-            },
-            credentials: "same-origin",
-            body: JSON.stringify(payload),
-          },
-        );
-        if (!res.ok) {
-          const body = await res.json().catch(() => ({}));
-          throw new Error(body.error || `Save failed (${res.status})`);
-        }
-        const updated = await res.json();
-        const idx = this.entries.findIndex(
-          (e) => e.entry_id === updated.entry_id,
-        );
+
+        const updated = await updateEntry(this.selected.entry_id, payload);
+        const idx = this.entries.findIndex((e) => e.entry_id === updated.entry_id);
         if (idx !== -1) this.entries.splice(idx, 1, updated);
-        this.selected = updated;
+        this.select(updated);
         this.savedAt = Date.now();
         return updated;
       } catch (e) {

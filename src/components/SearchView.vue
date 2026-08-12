@@ -48,9 +48,9 @@ import DataTable from "datatables.net-vue3";
 import DataTablesCore from "datatables.net-dt";
 import "datatables.net-dt/css/dataTables.dataTables.min.css";
 
-DataTable.use(DataTablesCore);
+import { getEntriesPaged } from "../api";
 
-const API_BASE = "/api/v1/contrib/fsrecordmetadata";
+DataTable.use(DataTablesCore);
 
 const iconToggle = (d) =>
   d
@@ -85,21 +85,11 @@ export default {
         ajax: async (data, callback) => {
           try {
             const page = Math.floor(data.start / data.length) + 1;
-            const params = new URLSearchParams({
+            const { rows, total } = await getEntriesPaged({
               [search.type]: search.term,
               _page: page,
               _per_page: data.length,
             });
-            const res = await fetch(`${API_BASE}/entries?${params}`, {
-              headers: { Accept: "application/json" },
-              credentials: "same-origin",
-            });
-            if (!res.ok) {
-              const body = await res.json().catch(() => ({}));
-              throw new Error(body.error || `Search failed (${res.status})`);
-            }
-            const total = parseInt(res.headers.get("X-Total-Count") || "0", 10);
-            const rows = await res.json();
             callback({
               draw: data.draw,
               data: rows,
@@ -108,12 +98,7 @@ export default {
             });
           } catch (e) {
             setError(e.message);
-            callback({
-              draw: data.draw,
-              data: [],
-              recordsTotal: 0,
-              recordsFiltered: 0,
-            });
+            callback({ draw: data.draw, data: [], recordsTotal: 0, recordsFiltered: 0 });
           }
         },
         columns: [

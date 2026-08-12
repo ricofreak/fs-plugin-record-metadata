@@ -85,8 +85,6 @@
               <tr
                 v-for="i in record.items"
                 :key="i.itemnumber"
-                :class="{ selected: i.itemnumber === selectedItemnumber }"
-                @click="selectedItemnumber = i.itemnumber"
               >
                 <td>{{ i.itemtype }}</td>
                 <td>{{ i.branchname || i.homebranch }}</td>
@@ -170,7 +168,7 @@
 </template>
 
 <script>
-const API_BASE = "/api/v1/contrib/fsrecordmetadata";
+import { lookupRecord, createEntry, checkDtn as checkDtnApi } from "../api";
 
 export default {
   name: "CreateView",
@@ -189,14 +187,6 @@ export default {
     };
   },
   computed: {
-    selectedItem() {
-      if (!this.record) return null;
-      return (
-        this.record.items.find(
-          (i) => i.itemnumber === this.selectedItemnumber,
-        ) || null
-      );
-    },
     dtn() {
       if (!this.record) return "";
       return [this.record.biblionumber, this.entry.extension]
@@ -224,19 +214,11 @@ export default {
   methods: {
     async checkDtn(value) {
       try {
-        const res = await fetch(
-          `${API_BASE}/entries/check-dtn?${new URLSearchParams({ dtn: value })}`,
-          {
-            headers: { Accept: "application/json" },
-            credentials: "same-origin",
-          },
-        );
-        if (!res.ok) throw new Error();
-        const body = await res.json();
-        if (value !== this.dtn) return; // a newer keystroke superseded this check
-        this.dtnStatus = body.available ? "available" : "taken";
+        const body = await checkDtnApi(value);
+        if (value !== this.dtn) return;
+        this.dtnStatus = body.available ? 'available' : 'taken';
       } catch (e) {
-        if (value === this.dtn) this.dtnStatus = "error";
+        if (value === this.dtn) this.dtnStatus = 'error';
       }
     },
     blankEntry() {
@@ -253,21 +235,7 @@ export default {
       this.record = null;
       this.saved = null;
       try {
-        const params = new URLSearchParams({
-          [this.searchType]: this.searchTerm,
-        });
-        const res = await fetch(`${API_BASE}/lookup?${params}`, {
-          headers: { Accept: "application/json" },
-          credentials: "same-origin",
-        });
-        if (!res.ok) {
-          const body = await res.json().catch(() => ({}));
-          throw new Error(body.error || `Lookup failed (${res.status})`);
-        }
-        this.record = await res.json();
-        this.selectedItemnumber = this.record.items.length
-          ? this.record.items[0].itemnumber
-          : null;
+        this.record = await lookupRecord({ [this.searchType]: this.searchTerm });
         this.entry = this.blankEntry();
       } catch (e) {
         this.error = e.message;
@@ -287,24 +255,12 @@ export default {
           volume_description: this.entry.volume_description || null,
           scan_site: this.entry.scan_site || null,
         };
-        console.log(payload);
-        const res = await fetch(`${API_BASE}/entries`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Accept: "application/json",
-          },
-          credentials: "same-origin",
-          body: JSON.stringify(payload),
-        });
-        if (!res.ok) {
-          const body = await res.json().catch(() => ({}));
-          throw new Error(body.error || `Save failed (${res.status})`);
-        }
-        const created = await res.json();
+
+        const created = await createEntry(payload);
         this.saved = created.entry_id;
         this.entry = this.blankEntry();
       } catch (e) {
+        if (e.status === 409) this.dtnStatus = "taken";
         this.error = e.message;
       } finally {
         this.saving = false;

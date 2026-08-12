@@ -28,9 +28,9 @@ import DataTable from 'datatables.net-vue3';
 import DataTablesCore from 'datatables.net-dt';
 import 'datatables.net-dt/css/dataTables.dataTables.min.css';
 
-DataTable.use(DataTablesCore);
+import { getProblemsPaged } from "../api";
 
-const API_BASE = '/api/v1/contrib/fsrecordmetadata';
+DataTable.use(DataTablesCore);
 
 export default {
   name: 'ProblemsView',
@@ -51,18 +51,16 @@ export default {
         ajax: async (data, callback) => {
           try {
             const page = Math.floor(data.start / data.length) + 1;
-            const params = new URLSearchParams({ _page: page, _per_page: data.length });
-            const res = await fetch(`${API_BASE}/problems?${params}`, {
-              headers: { Accept: 'application/json' },
-              credentials: 'same-origin',
+            const { rows, total } = await getProblemsPaged({
+              _page: page,
+              _per_page: data.length,
             });
-            if (!res.ok) {
-              const body = await res.json().catch(() => ({}));
-              throw new Error(body.error || `Load failed (${res.status})`);
-            }
-            const total = parseInt(res.headers.get('X-Total-Count') || '0', 10);
-            const rows = await res.json();
-            callback({ draw: data.draw, data: rows, recordsTotal: total, recordsFiltered: total });
+            callback({
+              draw: data.draw,
+              data: rows,
+              recordsTotal: total,
+              recordsFiltered: total,
+            });
           } catch (e) {
             setError(e.message);
             callback({ draw: data.draw, data: [], recordsTotal: 0, recordsFiltered: 0 });
