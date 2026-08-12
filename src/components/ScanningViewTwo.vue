@@ -84,7 +84,7 @@
           </li>
           <li>
             <label for="ocr_date">OCR date:</label>
-            <input id="ocr_date" type="date" v-model.trim="form.ocr_date" />
+            <DateField id="ocr_date" v-model="form.ocr_date" />
           </li>
           <li>
             <label for="pdf_ready_for_review">PDF ready for review:</label>
@@ -96,11 +96,11 @@
           </li>
           <li>
             <label for="review_start_date">Review start date:</label>
-            <input id="review_start_date" type="date" v-model.trim="form.review_start_date" />
+            <DateField id="review_start_date" v-model="form.review_start_date" />
           </li>
           <li>
             <label for="review_complete_date">Review complete date:</label>
-            <input id="review_complete_date" type="date" v-model.trim="form.review_complete_date" />
+            <DateField id="review_complete_date" v-model="form.review_complete_date" />
           </li>
           <li>
             <label for="image_review_notes">Image review notes:</label>
@@ -112,7 +112,7 @@
           </li>
           <li>
             <label for="pdf_loaded_date">PDF loaded date:</label>
-            <input id="pdf_loaded_date" type="date" v-model.trim="form.pdf_loaded_date" />
+            <DateField id="pdf_loaded_date" v-model="form.pdf_loaded_date" />
           </li>
           <li>
             <label for="pages_online">Loaded pages #:</label>
@@ -123,7 +123,7 @@
         <ol>
           <li>
             <label for="pdf_orem_archived_date">PDF Orem archive date:</label>
-            <input id="pdf_orem_archived_date" type="date" v-model.trim="form.pdf_orem_archived_date" />
+            <DateField id="pdf_orem_archived_date" v-model="form.pdf_orem_archived_date" />
           </li>
           <li>
             <label for="pdf_orem_drive_name">PDF Orem drive name:</label>
@@ -131,7 +131,7 @@
           </li>
           <li>
             <label for="pdf_copy2_archived_date">PDF Copy2 archive date:</label>
-            <input id="pdf_copy2_archived_date" type="date" v-model.trim="form.pdf_copy2_archived_date" />
+            <DateField id="pdf_copy2_archived_date" v-model="form.pdf_copy2_archived_date" />
           </li>
           <li>
             <label for="pdf_copy2_drive_name">PDF Copy2 drive name:</label>
@@ -139,7 +139,7 @@
           </li>
           <li>
             <label for="tiff_orem_archived_date">TIFF Orem archive date:</label>
-            <input id="tiff_orem_archived_date" type="date" v-model.trim="form.tiff_orem_archived_date" />
+            <DateField id="tiff_orem_archived_date" v-model="form.tiff_orem_archived_date" />
           </li>
           <li>
             <label for="tiff_orem_drive_name">TIFF Orem drive name:</label>
@@ -147,7 +147,7 @@
           </li>
           <li>
             <label for="tiff_copy2_archived_date">TIFF Copy2 archive date:</label>
-            <input id="tiff_copy2_archived_date" type="date" v-model.trim="form.tiff_copy2_archived_date" />
+            <DateField id="tiff_copy2_archived_date" v-model="form.tiff_copy2_archived_date" />
           </li>
           <li>
             <label for="tiff_copy2_drive_name">TIFF Copy2 drive name:</label>
@@ -159,7 +159,7 @@
           </li>
           <li>
             <label for="images_removed_date">Image removal date:</label>
-            <input id="images_removed_date" type="date" v-model.trim="form.images_removed_date" />
+            <DateField id="images_removed_date" v-model="form.images_removed_date" />
           </li>
           <li>
             <label for="images_removed_notes">Image removal notes:</label>

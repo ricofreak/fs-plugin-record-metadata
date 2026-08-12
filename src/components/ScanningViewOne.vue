@@ -71,7 +71,7 @@
         <ol>
           <li>
             <label for="md_date">Metadata complete date:</label>
-            <input id="md_date" type="date" v-model.trim="form.md_date" />
+            <DateField id="md_date" label="Metadata complete date" v-model="form.md_date" />
           </li>
           <li>
             <label for="scan_site">Scan site:</label>
@@ -87,7 +87,7 @@
           </li>
           <li>
             <label for="scan_date">Scan date:</label>
-            <input id="scan_date" type="date" v-model.trim="form.scan_date" />
+                <DateField id="scan_date" label="Scan date" v-model="form.scan_date" />
           </li>
           <li>
             <label for="scan_site_notes">Scan site notes:</label>
@@ -103,7 +103,7 @@
           </li>
           <li>
             <label for="audit_date_1">Audit 1 date:</label>
-            <input id="audit_date_1" type="date" v-model.trim="form.audit_date_1" />
+            <DateField id="audit_date_1" label="Audit 1 date" v-model="form.audit_date_1" />
           </li>
           <li>
             <label for="image_auditor_2_by">Image auditor 2:</label>
@@ -111,7 +111,7 @@
           </li>
           <li>
             <label for="audit_date_2">Audit 2 date:</label>
-            <input id="audit_date_2" type="date" v-model.trim="form.audit_date_2" />
+            <DateField id="audit_date_2" label="Audit 2 date" v-model="form.audit_date_2" />
           </li>
           <li style="margin-top: 1em">
             <label for="images_sent_by">Image sent by:</label>
@@ -119,7 +119,7 @@
           </li>
           <li>
             <label for="images_sent_date">Image sent date:</label>
-            <input id="images_sent_date" type="date" v-model.trim="form.images_sent_date" />
+            <DateField id="images_sent_date" label="Image sent date" v-model="form.images_sent_date" />
           </li>
         </ol>
       </fieldset>
@@ -131,9 +131,11 @@
 import ScanningForm from "./ScanningForm.vue";
 import ProblemNumbers from "./ProblemNumbers.vue";
 
+import DateField from "./DateField.vue";
+
 export default {
   name: "ScanningViewOne",
-  components: { ScanningForm, ProblemNumbers },
+  components: { ScanningForm, ProblemNumbers, DateField },
   props: { entry: { type: Object, default: null } },
   emits: ["saved", "step"],
   data() {
