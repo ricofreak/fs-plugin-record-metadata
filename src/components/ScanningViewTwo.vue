@@ -1,63 +1,13 @@
 <template>
-
-  <div>
-    <form @submit.prevent="search" class="fsrm-search">
-      <select v-model="searchType">
-        <option value="biblionumber">TN (biblionumber)</option>
-        <option value="barcode">Barcode</option>
-      </select>
-      <input v-model.trim="searchTerm" placeholder="Find an entry" />
-      <button
-        type="submit"
-        class="btn btn-primary"
-        :disabled="!searchTerm || loading"
-      >
-        {{ loading ? "Searching…" : "Find entry" }}
-      </button>
-    </form>
-
-    <p v-if="error" class="fsrm-error">{{ error }}</p>
-    <p v-if="searched && !entries.length && !loading">
-      No entries found. Create one first.
-    </p>
-    <fieldset v-if="entries.length">
-      <h2>Entries</h2>
-      <table class="fsrm-items table table-success table-responsive">
-        <thead>
-          <tr>
-            <th></th>
-            <th>DTN</th>
-            <th>TN</th>
-            <th>Title</th>
-            <th>Access</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr
-            v-for="e in entries"
-            :key="e.entry_id"
-            :class="{ selected: selected && e.entry_id === selected.entry_id }"
-            @click="select(e)"
-          >
-            <td>
-              <input
-                type="radio"
-                :value="e.entry_id"
-                :checked="selected && selected.entry_id === e.entry_id"
-              />
-            </td>
-            <td>{{ e.dtn }}</td>
-            <td>{{ e.biblionumber }}</td>
-            <td>{{ e.title }}</td>
-            <td>{{ e.access }}</td>
-          </tr>
-        </tbody>
-      </table>
-    </fieldset>
-
-    <div v-if="selected">
-      <h2>DTN: {{ selected.dtn }}</h2>
-
+  <ScanningForm
+    :entry="entry"
+    :field-keys="fieldKeys"
+    :prev-step="1"
+    prev-step-label="Save and return to step 1"
+    @saved="$emit('saved', $event)"
+    @step="$emit('step', $event)"
+  >
+    <template #fields="{ form, names, selected, editProblem, addProblem }">
       <fieldset class="rows">
         <ol>
           <li><span class="label">Title:</span> {{ selected.title }}</li>
@@ -79,17 +29,11 @@
           </li>
           <li>
             <label for="secondary_identifier">Secondary identifier:</label>
-            <input
-              id="secondary_identifier"
-              v-model.trim="form.secondary_identifier"
-            />
+            <input id="secondary_identifier" v-model.trim="form.secondary_identifier" />
           </li>
           <li>
             <label for="volume_description">Volume description:</label>
-            <input
-              id="volume_description"
-              v-model.trim="form.volume_description"
-            />
+            <input id="volume_description" v-model.trim="form.volume_description" />
           </li>
           <li>
             <label>Problem number(s):</label>
@@ -101,10 +45,7 @@
           </li>
           <li>
             <label for="owning_institution">Owning Institution:</label>
-            <input
-              id="owning_institution"
-              v-model.trim="form.owning_institution"
-            />
+            <input id="owning_institution" v-model.trim="form.owning_institution" />
           </li>
           <li>
             <label for="access">Access level:</label>
@@ -120,12 +61,7 @@
           </li>
           <li>
             <label for="callnumbers">Call number(s):</label>
-            <input
-              id="callnumbers"
-              :value="selected.callnumbers"
-              readonly
-              disabled
-            />
+            <input id="callnumbers" :value="selected.callnumbers" readonly disabled />
           </li>
           <li>
             <label for="number_of_pages">Number of pages:</label>
@@ -140,6 +76,7 @@
             <input id="limb_id" />
           </li>
         </ol>
+
         <ol>
           <li>
             <label for="ocr_site">OCR site:</label>
@@ -147,7 +84,7 @@
           </li>
           <li>
             <label for="ocr_date">OCR date:</label>
-            <input id="ocr_date" type="date" v-model.trim="form.ocr_date" @focus="setToday('ocr_date')" />
+            <input id="ocr_date" type="date" v-model.trim="form.ocr_date" />
           </li>
           <li>
             <label for="pdf_ready_for_review">PDF ready for review:</label>
@@ -155,15 +92,15 @@
           </li>
           <li>
             <label for="review_by">Published image review by:</label>
-            <input id="review_by" type="date" v-model.trim="form.review_by" @focus="setToday('review_by')" />
+            <input id="review_by" v-model.trim="form.review_by" />
           </li>
           <li>
             <label for="review_start_date">Review start date:</label>
-            <input id="review_start_date" type="date" v-model.trim="form.review_start_date" @focus="setToday('review_start_date')" />
+            <input id="review_start_date" type="date" v-model.trim="form.review_start_date" />
           </li>
           <li>
             <label for="review_complete_date">Review complete date:</label>
-            <input id="review_complete_date" type="date" v-model.trim="form.review_complete_date" @focus="setToday('review_complete_date')" />
+            <input id="review_complete_date" type="date" v-model.trim="form.review_complete_date" />
           </li>
           <li>
             <label for="image_review_notes">Image review notes:</label>
@@ -175,17 +112,18 @@
           </li>
           <li>
             <label for="pdf_loaded_date">PDF loaded date:</label>
-            <input id="pdf_loaded_date" type="date" v-model.trim="form.pdf_loaded_date" @focus="setToday('pdf_loaded_date')" />
+            <input id="pdf_loaded_date" type="date" v-model.trim="form.pdf_loaded_date" />
           </li>
           <li>
             <label for="pages_online">Loaded pages #:</label>
             <textarea id="pages_online" v-model.trim="form.pages_online"></textarea>
           </li>
         </ol>
+
         <ol>
           <li>
             <label for="pdf_orem_archived_date">PDF Orem archive date:</label>
-            <input id="pdf_orem_archived_date" type="date" v-model.trim="form.pdf_orem_archived_date" @focus="setToday('pdf_orem_archived_date')" />
+            <input id="pdf_orem_archived_date" type="date" v-model.trim="form.pdf_orem_archived_date" />
           </li>
           <li>
             <label for="pdf_orem_drive_name">PDF Orem drive name:</label>
@@ -193,7 +131,7 @@
           </li>
           <li>
             <label for="pdf_copy2_archived_date">PDF Copy2 archive date:</label>
-            <input id="pdf_copy2_archived_date" type="date" v-model.trim="form.pdf_copy2_archived_date" @focus="setToday('pdf_copy2_archived_date')" />
+            <input id="pdf_copy2_archived_date" type="date" v-model.trim="form.pdf_copy2_archived_date" />
           </li>
           <li>
             <label for="pdf_copy2_drive_name">PDF Copy2 drive name:</label>
@@ -201,7 +139,7 @@
           </li>
           <li>
             <label for="tiff_orem_archived_date">TIFF Orem archive date:</label>
-            <input id="tiff_orem_archived_date" type="date" v-model.trim="form.tiff_orem_archived_date" @focus="setToday('tiff_orem_archived_date')" />
+            <input id="tiff_orem_archived_date" type="date" v-model.trim="form.tiff_orem_archived_date" />
           </li>
           <li>
             <label for="tiff_orem_drive_name">TIFF Orem drive name:</label>
@@ -209,7 +147,7 @@
           </li>
           <li>
             <label for="tiff_copy2_archived_date">TIFF Copy2 archive date:</label>
-            <input id="tiff_copy2_archived_date" type="date" v-model.trim="form.tiff_copy2_archived_date" @focus="setToday('tiff_copy2_archived_date')" />
+            <input id="tiff_copy2_archived_date" type="date" v-model.trim="form.tiff_copy2_archived_date" />
           </li>
           <li>
             <label for="tiff_copy2_drive_name">TIFF Copy2 drive name:</label>
@@ -217,217 +155,74 @@
           </li>
           <li>
             <label for="images_removed_by">Image removal request by:</label>
-            <input id="images_removed_by" v-model.trim="form.images_removed_by"  />
+            <input id="images_removed_by" v-model.trim="form.images_removed_by" />
           </li>
           <li>
             <label for="images_removed_date">Image removal date:</label>
-            <input id="images_removed_date" type="date" v-model.trim="form.images_removed_date" @focus="setToday('images_removed_date')" />
+            <input id="images_removed_date" type="date" v-model.trim="form.images_removed_date" />
           </li>
           <li>
             <label for="images_removed_notes">Image removal notes:</label>
             <textarea id="images_removed_notes" v-model.trim="form.images_removed_notes"></textarea>
           </li>
         </ol>
-
       </fieldset>
-
-      <fieldset class="action">
-        <button class="btn btn-primary" :disabled="saving" @click="save">
-          {{ saving ? "Saving…" : "Save" }}
-        </button>
-        <span v-if="savedAt" class="fsrm-saved">Saved.</span>
-        <button class="btn btn-primary" type="button" @click="saveAndBack" :disabled="saving">
-            {{ saving ? "Saving…" : "Save and back to step 1" }}
-        </button>
-      </fieldset>
-    </div>
-    <ProblemsModal
-      v-if="showProblemsModal && selected"
-      :entry-id="selected.entry_id"
-      :dtn="selected.dtn"
-      :problem-id="editingProblemId"
-      @saved="onProblemSaved"
-      @cancel="showProblemsModal = false"
-    />
-  </div>
+    </template>
+  </ScanningForm>
 </template>
 
 <script>
-import ProblemsModal from './ProblemsModal.vue';
-import ProblemNumbers from './ProblemNumbers.vue';
-import { getEntries, updateEntry } from "../api";
-
-const toDateInput = (v) => (v ? String(v).slice(0, 10) : "");
+import ScanningForm from "./ScanningForm.vue";
+import ProblemNumbers from "./ProblemNumbers.vue";
 
 export default {
   name: "ScanningViewTwo",
+  components: { ScanningForm, ProblemNumbers },
   props: {
     entry: { type: Object, default: null },
   },
-  components: { ProblemsModal, ProblemNumbers },
+  emits: ["saved", "step"],
   data() {
     return {
-      searchType: "biblionumber",
-      searchTerm: "",
-      entries: [],
-      selected: null,
-      form: {},
-      searched: false,
-      loading: false,
-      saving: false,
-      savedAt: null,
-      error: null,
-      showProblemsModal: false,
+      fieldKeys: [
+        "secondary_identifier",
+        "volume_description",
+        "owning_institution",
+        "access",
+        "number_of_pages",
+
+        "ocr_site",
+        "ocr_date",
+        "pdf_ready_for_review",
+        "review_by",
+        "review_start_date",
+        "review_complete_date",
+        "image_review_notes",
+        "pdf_sent_to",
+        "pdf_loaded_date",
+        "pages_online",
+
+        "pdf_orem_archived_date",
+        "pdf_orem_drive_name",
+        "pdf_copy2_archived_date",
+        "pdf_copy2_drive_name",
+        "tiff_orem_archived_date",
+        "tiff_orem_drive_name",
+        "tiff_copy2_archived_date",
+        "tiff_copy2_drive_name",
+
+        "images_removed_by",
+        "images_removed_date",
+        "images_removed_notes",
+      ],
     };
-  },
-  created() {
-    if (this.entry) this.select(this.entry);
-  },
-  watch: {
-    entry(val) {
-      if (val) this.select(val);
-    },
-  },
-  methods: {
-    editProblem(problemId) {
-      this.editingProblemId = Number(problemId);
-      this.showProblemsModal = true;
-    },
-    addProblem() {
-      this.editingProblemId = null;
-      this.showProblemsModal = true;
-    },
-    async onProblemSaved() {
-      const entryId = this.selected.entry_id;
-      this.showProblemsModal = false;
-      await this.search(); // update on save
-      const again = this.entries.find((e) => e.entry_id === entryId);
-      if (again) this.select(again);
-    },
-    setToday(field) {
-      if (this.form[field]) return; // if we already have a date, bail
-      const d = new Date();
-      const iso = new Date(d.getTime() - d.getTimezoneOffset() * 60000)
-        .toISOString()
-        .slice(0, 10);
-      this.form[field] = iso;
-    },
-    async search() {
-      this.loading = true;
-      this.error = null;
-      this.entries = [];
-      this.selected = null;
-      try {
-        this.entries = await getEntries({ [this.searchType]: this.searchTerm });
-        if (this.entries.length === 1) this.select(this.entries[0]);
-      } catch (e) {
-        this.error = e.message;
-      } finally {
-        this.searched = true;
-        this.loading = false;
-      }
-    },
-    select(entry) {
-      this.selected = entry;
-      this.savedAt = null;
-      this.form = {
-        secondary_identifier: entry.secondary_identifier || "",
-        volume_description: entry.volume_description || "",
-        owning_institution: entry.owning_institution || "",
-        access: entry.access || "",
-        number_of_pages: entry.number_of_pages || "",
-
-        ocr_site: entry.ocr_site || "",
-        ocr_date: toDateInput(entry.ocr_date),
-        pdf_ready_for_review: entry.pdf_ready_for_review || "",
-        review_by: toDateInput(entry.review_by),
-        review_start_date: toDateInput(entry.review_start_date),
-        review_complete_date: toDateInput(entry.review_complete_date),
-        image_review_notes: entry.image_review_notes || "",
-        pdf_sent_to: entry.pdf_sent_to || "",
-        pdf_loaded_date: toDateInput(entry.pdf_loaded_date),
-        pages_online: entry.pages_online || "",
-
-        pdf_orem_archived_date: toDateInput(entry.pdf_orem_archived_date),
-        pdf_orem_drive_name: entry.pdf_orem_drive_name || "",
-        pdf_copy2_archived_date: toDateInput(entry.pdf_copy2_archived_date),
-        pdf_copy2_drive_name: entry.pdf_copy2_drive_name || "",
-        tiff_orem_archived_date: toDateInput(entry.tiff_orem_archived_date),
-        tiff_orem_drive_name: entry.tiff_orem_drive_name || "",
-        tiff_copy2_archived_date: toDateInput(entry.tiff_copy2_archived_date),
-        tiff_copy2_drive_name: entry.tiff_copy2_drive_name || "",
-
-        images_removed_by: entry.images_removed_by || "",
-        images_removed_date: toDateInput(entry.images_removed_date),
-        images_removed_notes: entry.images_removed_notes || "",
-      };
-    },
-    async save() {
-      this.saving = true;
-      this.error = null;
-      this.savedAt = null;
-      try {
-        const payload = {
-          secondary_identifier: this.form.secondary_identifier || null,
-          owning_institution: this.form.owning_institution || null,
-          volume_description: this.form.volume_description || null,
-          access: this.form.access || null,
-          number_of_pages: this.form.number_of_pages || null,
-
-          ocr_site: this.form.ocr_site || null,
-          ocr_date: this.form.ocr_date || null,
-          pdf_ready_for_review: this.form.pdf_ready_for_review || null,
-          review_by: this.form.review_by || null,
-          review_start_date: this.form.review_start_date || null,
-          review_complete_date: this.form.review_complete_date || null,
-          image_review_notes: this.form.image_review_notes || null,
-          pdf_sent_to: this.form.pdf_sent_to || null,
-          pdf_loaded_date: this.form.pdf_loaded_date || null,
-          pages_online: this.form.pages_online || null,
-
-          pdf_orem_archived_date: this.form.pdf_orem_archived_date || null,
-          pdf_orem_drive_name: this.form.pdf_orem_drive_name || null,
-          pdf_copy2_archived_date: this.form.pdf_copy2_archived_date || null,
-          pdf_copy2_drive_name: this.form.pdf_copy2_drive_name || null,
-          tiff_orem_archived_date: this.form.tiff_orem_archived_date || null,
-          tiff_orem_drive_name: this.form.tiff_orem_drive_name || null,
-          tiff_copy2_archived_date: this.form.tiff_copy2_archived_date || null,
-          tiff_copy2_drive_name: this.form.tiff_copy2_drive_name || null,
-
-          images_removed_by: this.form.images_removed_by || null,
-          images_removed_date: this.form.images_removed_date || null,
-          images_removed_notes: this.form.images_removed_notes || null,
-
-        };
-        const updated = await updateEntry(this.selected.entry_id, payload);
-        const idx = this.entries.findIndex((e) => e.entry_id === updated.entry_id);
-        if (idx !== -1) this.entries.splice(idx, 1, updated);
-        this.select(updated);
-        this.savedAt = Date.now();
-        return updated;
-      } catch (e) {
-        this.error = e.message;
-        return null;
-      } finally {
-        this.saving = false;
-      }
-
-    },
-    async saveAndBack() {
-      console.log("WE HERE");
-      const updated = await this.save();
-      if (!updated) return;
-      this.$emit("saved", updated);   // Main sets this.entry = updated
-      this.$emit("step", 1);
-    },
   },
 };
 </script>
+
 <style>
 #scanform_step2 {
   display: grid;
   grid-template-columns: 1fr 1fr 1fr;
 }
-.fsrm-problem-open   { color: #c00; font-weight: bold; }
-.fsrm-problem-closed { color: #418940; font-weight: bold; }
 </style>
