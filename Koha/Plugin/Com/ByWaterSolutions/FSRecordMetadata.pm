@@ -8,6 +8,8 @@ use JSON;
 use C4::Installer qw(TableExists);
 use C4::Auth   qw( haspermission );
 
+use Koha::AuthorisedValueCategories;
+
 our $VERSION = "0.0.1";
 
 our $metadata = {
@@ -88,6 +90,16 @@ our %PROBLEM_COLUMNS = (
 our %CREATE_ONLY_COLUMNS = (
     biblionumber => 'integer',
     dtn          => 'string',
+);
+
+#fields that will be tied to an AV
+our %AV_FIELDS = (
+    owning_institution => 'Owning institution',
+    scan_site          => 'Scan site',
+    scan_machine       => 'Scan machine',
+    ocr_site           => 'OCR site',
+    problem_step       => 'Problem step',
+    problem_reason     => 'Problem reason',
 );
 
 sub new {
@@ -203,7 +215,13 @@ sub install {
             ) ENGINE = INNODB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
         ");
     }
-
+    for my $field ( keys %AV_FIELDS ) {
+        my $cat = $AV_FIELDS{$field}->{default};
+        $dbh->do(
+            "INSERT IGNORE INTO authorised_value_categories( category_name, is_system ) VALUES (?, NULL)",
+            undef, $cat
+        );
+    }
     return 1;
 }
 
@@ -229,8 +247,46 @@ sub tool {
     $template->param(
         current_user_id   => $userenv->{number},
         current_user_name => $userenv ? ( $userenv->{firstname} . ' ' . $userenv->{surname} ) : '',
+        av_json => to_json( $self->authorised_values_for_fields ),
     );
     $self->output_html( $template->output() );
+}
+
+sub configure {
+    my ( $self, $args ) = @_;
+    my $cgi = $self->{cgi};
+
+    unless ( $cgi->param('save') ) {
+        my $template = $self->get_template({ file => 'configure.tt' });
+
+        my @categories = map { $_->category_name }
+            Koha::AuthorisedValueCategories->search( {}, { order_by => 'category_name' } )->as_list;
+
+        my @fields;
+        for my $field ( sort keys %AV_FIELDS ) {
+            push @fields, {
+                name    => $field,
+                label   => $AV_FIELDS{$field},
+                current => $self->av_category_for($field) // '',
+            };
+        }
+
+        $template->param(
+            av_fields  => \@fields,
+            categories => \@categories,
+        );
+
+        $self->output_html( $template->output() );
+    }
+    else {
+        my %data;
+        for my $field ( keys %AV_FIELDS ) {
+            my $chosen = scalar $cgi->param("av_category_$field") // '';
+            $data{"av_category_$field"} = $chosen;
+        }
+        $self->store_data( \%data );
+        $self->go_home();
+    }
 }
 
 sub search_entries {
@@ -647,6 +703,33 @@ sub api_routes {
     _inject_body_properties( $spec, '/entries/{entry_id}', 'put',  \%update_props );
 
     return $spec;
+}
+
+sub av_category_for {
+    my ( $self, $field ) = @_;
+
+    my $category = $self->retrieve_data("av_category_$field");
+    return ( defined $category && length $category ) ? $category : undef;
+}
+
+sub authorised_values_for_fields {
+    my ($self) = @_;
+
+    my %out;
+    for my $field ( keys %AV_FIELDS ) {
+        my $category = $self->av_category_for($field);
+        next unless $category;
+
+        $out{$field} = [
+            map { { value => $_->authorised_value, label => $_->lib } }
+                Koha::AuthorisedValues->search(
+                    { category => $category },
+                    { order_by => 'lib' }
+                )->as_list
+        ];
+    }
+
+    return \%out;
 }
 
 sub _inject_body_properties {

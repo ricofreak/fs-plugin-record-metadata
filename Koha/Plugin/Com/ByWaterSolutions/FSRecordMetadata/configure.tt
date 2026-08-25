@@ -1,0 +1,42 @@
+[% USE raw %]
+[% USE Asset %]
+[% USE Koha %]
+[% INCLUDE 'doc-head-open.inc' %]
+<title>Koha: FS Record Metadata: Configuration</title>
+[% INCLUDE 'doc-head-close.inc' %]
+</head>
+<body id="fs_record_metadata_configure" class="plugin">
+[% INCLUDE 'header.inc' %]
+
+<div class="main container-fluid">
+  <h1>FS Record Metadata: Authorised value categories</h1>
+  <p>Choose which authorised value category supplies the options for each field. Leave blank to use the plugin default.</p>
+
+  <form method="get">
+    <input type="hidden" name="class" value="[% CLASS %]"/>
+    <input type="hidden" name="method" value="[% METHOD %]"/>
+
+    <fieldset class="rows">
+      <ol>
+        [% FOREACH f IN av_fields %]
+        <li>
+          <label for="av_category_[% f.name | html %]">[% f.label | html %]:</label>
+          <select name="av_category_[% f.name | html %]" id="av_category_[% f.name | html %]">
+            <option value="">-- not configured (free text) --</option>
+            [% FOREACH c IN categories %]
+              <option value="[% c | html %]" [% IF c == f.current %]selected="selected"[% END %]>[% c | html %]</option>
+            [% END %]
+          </select>
+        </li>
+        [% END %]
+      </ol>
+    </fieldset>
+
+    <fieldset class="action">
+      <input type="hidden" name="save" value="1"/>
+      <input type="submit" class="btn btn-primary" value="Save configuration"/>
+    </fieldset>
+  </form>
+</div>
+
+[% INCLUDE 'intranet-bottom.inc' %]

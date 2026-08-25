@@ -44,8 +44,8 @@
             <button type="button" id="add_problem" @click="addProblem">+ Add</button>
           </li>
           <li>
-            <label for="owning_institution">Owning Institution:</label>
-            <input id="owning_institution" v-model.trim="form.owning_institution" />
+            <label for="owning_institution">Owning institution:</label>
+            <AvSelect id="owning_institution" field="owning_institution" v-model="form.owning_institution" />
           </li>
           <li>
             <label for="access">Access level:</label>
@@ -80,7 +80,7 @@
         <ol>
           <li>
             <label for="ocr_site">OCR site:</label>
-            <input id="ocr_site" v-model.trim="form.ocr_site" />
+            <AvSelect id="ocr_site" field="ocr_site" v-model="form.ocr_site" />
           </li>
           <li>
             <label for="ocr_date">OCR date:</label>

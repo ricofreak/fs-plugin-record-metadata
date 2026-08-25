@@ -35,8 +35,8 @@
             <button type="button" id="add_problem" @click="addProblem">+ Add</button>
           </li>
           <li>
-            <label for="owning_institution">Owning Institution:</label>
-            <input id="owning_institution" v-model.trim="form.owning_institution" />
+            <label for="owning_institution">Owning institution:</label>
+            <AvSelect id="owning_institution" field="owning_institution" v-model="form.owning_institution" />
           </li>
           <li>
             <label for="access">Access level:</label>
@@ -75,7 +75,7 @@
           </li>
           <li>
             <label for="scan_site">Scan site:</label>
-            <input id="scan_site" v-model.trim="form.scan_site" />
+            <AvSelect id="scan_site" field="scan_site" v-model="form.scan_site" />
           </li>
           <li>
             <label for="scan_operator_by">Scan operator:</label>
@@ -83,7 +83,7 @@
           </li>
           <li>
             <label for="scan_machine">Scan machine #:</label>
-            <input id="scan_machine" v-model.trim="form.scan_machine" />
+            <AvSelect id="scan_machine" field="scan_machine" v-model="form.scan_machine" />
           </li>
           <li>
             <label for="scan_date">Scan date:</label>

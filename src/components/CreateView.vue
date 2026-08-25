@@ -145,14 +145,15 @@
             </li>
             <li>
               <label for="owning_institution">Owning institution:</label>
-              <input
+              <AvSelect
                 id="owning_institution"
-                v-model.trim="entry.owning_institution"
+                field="owning_institution"
+                v-model="entry.owning_institution"
               />
             </li>
             <li>
               <label for="scan_site">Scan site:</label>
-              <input id="scan_site" v-model.trim="entry.scan_site" />
+              <AvSelect id="scan_site" field="scan_site" v-model="entry.scan_site" />
             </li>
           </ol>
         </div>
