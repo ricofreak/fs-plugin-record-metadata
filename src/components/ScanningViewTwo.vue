@@ -61,7 +61,7 @@
           </li>
           <li>
             <label for="number_of_pages">Number of pages:</label>
-            <input id="number_of_pages" v-model.trim="form.number_of_pages" />
+            <input type="number" id="number_of_pages" v-model.trim="form.number_of_pages" />
           </li>
           <li style="margin-top: 1em">
             <label for="url_856x">URL:</label>
@@ -84,7 +84,7 @@
           </li>
           <li>
             <label for="pdf_ready_for_review">PDF ready for review:</label>
-            <input id="pdf_ready_for_review" v-model.trim="form.pdf_ready_for_review" />
+            <DateField id="pdf_ready_for_review" v-model.trim="form.pdf_ready_for_review" />
           </li>
           <li>
             <label for="review_by">Published image review by:</label>
@@ -112,7 +112,7 @@
           </li>
           <li>
             <label for="pages_online">Loaded pages #:</label>
-            <textarea id="pages_online" v-model.trim="form.pages_online"></textarea>
+            <input type="number" id="pages_online" v-model.trim="form.pages_online" />
           </li>
         </ol>
 
@@ -184,7 +184,6 @@ export default {
         "secondary_identifier",
         "volume_description",
         "owning_institution",
-        "access",
         "number_of_pages",
 
         "ocr_site",

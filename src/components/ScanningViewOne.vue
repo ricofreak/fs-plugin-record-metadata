@@ -55,7 +55,7 @@
               </li>
               <li>
                 <label for="number_of_pages">Number of pages:</label>
-                <input id="number_of_pages" v-model.trim="form.number_of_pages" />
+                <input type="number" id="number_of_pages" v-model.trim="form.number_of_pages" />
               </li>
               <li style="margin-top: 1em">
                 <label for="url_856x">URL:</label>
@@ -94,7 +94,7 @@
               </li>
               <li>
                 <label for="scanned_image_count">Scanned images count:</label>
-                <input id="scanned_image_count" v-model.trim="form.scanned_image_count" />
+                <input type="number" id="scanned_image_count" v-model.trim="form.scanned_image_count" />
               </li>
               <li style="margin-top: 1em">
                 <label for="image_auditor_1_by">Image auditor 1:</label>
@@ -145,7 +145,6 @@ export default {
         "secondary_identifier",
         "owning_institution",
         "volume_description",
-        "access",
         "number_of_pages",
         "md_date",
         "md_by",

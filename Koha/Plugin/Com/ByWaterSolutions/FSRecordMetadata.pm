@@ -50,7 +50,7 @@ our %ENTRY_COLUMNS = (
     ocr_site             => 'string',
     ocr_date             => 'string',
 
-    pdf_ready_for_review => 'integer',
+    pdf_ready_for_review => 'string',
     review_by            => 'integer',
     review_start_date    => 'string',
     review_complete_date => 'string',
@@ -151,7 +151,7 @@ sub install {
                 ocr_site             VARCHAR(80) NULL,
                 ocr_date             DATE NULL,
 
-                pdf_ready_for_review TINYINT(1) NOT NULL DEFAULT 0,
+                pdf_ready_for_review DATE NULL,
                 review_by            INT(11) NULL,
                 review_start_date    DATE NULL,
                 review_complete_date DATE NULL,

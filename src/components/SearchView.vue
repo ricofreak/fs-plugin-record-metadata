@@ -125,9 +125,9 @@ export default {
           { data: "scan_date", render: iconToggle },
           { data: "audit_date_1", render: iconToggle },
           { data: "audit_date_2", render: iconToggle },
-          { data: "orc", render: iconToggle },
+          { data: "ocr_date", render: iconToggle },
           { data: "published", render: iconToggle },
-          { data: "or", render: iconToggle },
+          { data: "review_complete_date", render: iconToggle },
         ],
       };
     },
