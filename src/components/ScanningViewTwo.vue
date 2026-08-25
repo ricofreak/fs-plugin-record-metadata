@@ -48,10 +48,6 @@
             <AvSelect id="owning_institution" field="owning_institution" v-model="form.owning_institution" />
           </li>
           <li>
-            <label for="access">Access level:</label>
-            <input id="access" v-model.trim="form.access" />
-          </li>
-          <li>
             <label for="itypes">Item type(s):</label>
             <input id="itypes" :value="selected.itypes" readonly disabled />
           </li>

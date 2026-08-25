@@ -27,7 +27,6 @@ our %ENTRY_COLUMNS = (
     secondary_identifier => 'string',
     owning_institution   => 'string',
     volume_description   => 'string',
-    access               => 'string',
     number_of_pages      => 'integer',
 
     md_date              => 'string',
@@ -128,6 +127,7 @@ sub install {
                 owning_institution   VARCHAR(80) NULL,
                 volume_description   VARCHAR(255) NULL,
                 access               VARCHAR(80) NULL,
+                access_source        VARCHAR(20) NULL,
                 number_of_pages      INT(11) NULL,
 
                 md_date              DATE NULL,
@@ -183,6 +183,7 @@ sub install {
                 UNIQUE KEY `dtn_uniq` (`dtn`),
                 INDEX (`biblionumber`),
                 INDEX (`scan_date`),
+                INDEX (`access`),
                 INDEX (`pdf_loaded_date`),
                 CONSTRAINT `fs_record_metadata_entries_ibfk_1` FOREIGN KEY (`biblionumber`)
                     REFERENCES `biblio` (`biblionumber`) ON DELETE CASCADE ON UPDATE CASCADE
@@ -215,13 +216,7 @@ sub install {
             ) ENGINE = INNODB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
         ");
     }
-    for my $field ( keys %AV_FIELDS ) {
-        my $cat = $AV_FIELDS{$field}->{default};
-        $dbh->do(
-            "INSERT IGNORE INTO authorised_value_categories( category_name, is_system ) VALUES (?, NULL)",
-            undef, $cat
-        );
-    }
+
     return 1;
 }
 
@@ -369,6 +364,11 @@ sub create_entry {
     my $table = $self->get_qualified_table_name('entries');
     my $dbh   = C4::Context->dbh;
 
+    my $biblio   = Koha::Biblios->find( $params->{biblionumber} );
+    my $resolved = $self->resolve_access_level({ biblio => $biblio });
+    $params->{access}        = $resolved->{value};
+    $params->{access_source} = $resolved->{source};
+
     my $userenv = C4::Context->userenv;
     my $user_id = $userenv ? $userenv->{number} : undef;
 
@@ -377,6 +377,12 @@ sub create_entry {
     my ( @names, @placeholders, @binds );
     for my $col (@cols) {
         next unless exists $params->{$col};
+        push @names,        $col;
+        push @placeholders, '?';
+        push @binds,        $params->{$col};
+    }
+
+    for my $col (qw( access access_source )) {
         push @names,        $col;
         push @placeholders, '?';
         push @binds,        $params->{$col};
@@ -628,6 +634,31 @@ sub get_record_details {
     };
 }
 
+sub resolve_access_level {
+    my ( $self, $args ) = @_;
+
+    my $biblio = $args->{biblio};
+    return { value => 'Undetermined', source => 'none' } unless $biblio;
+
+    my $record = eval { $biblio->metadata->record };
+    return { value => 'Undetermined', source => 'none' } unless $record;
+
+    # 1. Look at 998f first
+    for my $field ( $record->field('998') ) {
+        my $f = $field->subfield('f');
+        next unless defined $f && length $f;
+        return { value => 'Privacy Restricted', source => '998f' }
+            if $self->_is_term_in_998f($f);
+    }
+
+    # 2. look at 506$a
+
+    # 3. look at 542$i 
+
+    # 4. Set to UNDETERMINED 
+    return { value => 'Undetermined', source => 'none' };
+}
+
 sub search_staff {
     my ( $self, $params ) = @_;
 
@@ -730,6 +761,17 @@ sub authorised_values_for_fields {
     }
 
     return \%out;
+}
+
+sub _is_term_in_998f {
+    my ( $self, $value ) = @_;
+    return 0 unless defined $value && length $value;
+
+    my @terms = qw( ADULT CHILD DECEASED );
+    for my $term (@terms) {
+        return 1 if $value =~ /\b\Q$term\E\b/i;
+    }
+    return 0;
 }
 
 sub _inject_body_properties {
