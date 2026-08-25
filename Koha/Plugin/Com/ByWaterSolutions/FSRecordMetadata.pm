@@ -76,7 +76,6 @@ our %ENTRY_COLUMNS = (
 our %PROBLEM_COLUMNS = (
     entry_id       => 'integer',
     step           => 'string',
-    status         => 'string',
     reason         => 'string',
     description    => 'string',
     problem_date   => 'string',
@@ -185,7 +184,6 @@ sub install {
                 problem_id     INT(11) NOT NULL AUTO_INCREMENT,
                 entry_id       INT(11) NOT NULL,
                 step           VARCHAR(80) NULL,
-                status         VARCHAR(80) NULL,
                 reason         VARCHAR(80) NULL,
                 description    TEXT NULL,
                 problem_date   DATE NULL,
@@ -199,7 +197,6 @@ sub install {
                 updated_user   INT(11) NULL,
                 PRIMARY KEY (`problem_id`),
                 INDEX (`entry_id`),
-                INDEX (`status`),
                 INDEX (`problem_date`),
                 CONSTRAINT `fs_record_metadata_problems_ibfk_1` FOREIGN KEY (`entry_id`)
                     REFERENCES `$entries_table` (`entry_id`) ON DELETE CASCADE ON UPDATE CASCADE
@@ -416,7 +413,8 @@ sub search_problems {
                    e.ocr_site,
                    e.scan_date,
                    b.title,
-                   b.author
+                   b.author,
+                   IF(p.resolved_on IS NULL, 'Open', 'Closed') AS status
             $from
             ORDER BY p.problem_id DESC
             LIMIT ? OFFSET ?

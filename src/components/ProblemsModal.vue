@@ -103,6 +103,7 @@ export default {
           .toISOString()
           .slice(0, 10),
         initials: '',
+        resolved_on: '',
       },
     };
   },
