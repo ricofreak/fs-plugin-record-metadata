@@ -160,6 +160,100 @@
             }
         }
     },
+    "/entries/bulk": {
+        "post": {
+            "x-mojo-to": "Com::ByWaterSolutions::FSRecordMetadata::Controller#create_entries",
+            "operationId": "fsrmCreateEntriesBulk",
+            "tags": ["fsrecordmetadata"],
+            "consumes": ["application/json"],
+            "produces": ["application/json"],
+            "parameters": [
+                {
+                    "name": "body",
+                    "in": "body",
+                    "required": true,
+                    "schema": {
+                        "type": "object",
+                        "properties": {
+                            "owning_institution": { "type": ["string", "null"] },
+                            "scan_site":          { "type": ["string", "null"] },
+                            "items": {
+                                "type": "array",
+                                "items": {
+                                    "type": "object",
+                                    "properties": {
+                                        "type":  { "type": "string" },
+                                        "value": { "type": "string" }
+                                    },
+                                    "required": ["type", "value"],
+                                    "additionalProperties": false
+                                }
+                            }
+                        },
+                        "required": ["items"],
+                        "additionalProperties": false
+                    }
+                }
+            ],
+            "responses": {
+                "200": { "description": "Batch results", "schema": { "type": "object" } },
+                "400": { "description": "Bad request", "schema": { "type": "object", "properties": { "error": { "type": "string" } } } },
+                "500": { "description": "Internal server error", "schema": { "type": "object", "properties": { "error": { "type": "string" } } } }
+            }
+        }
+    },
+    "/entries/preview": {
+        "post": {
+            "x-mojo-to": "Com::ByWaterSolutions::FSRecordMetadata::Controller#preview_entries",
+            "operationId": "fsrmPreviewEntries",
+            "tags": ["fsrecordmetadata"],
+            "consumes": ["application/json"],
+            "produces": ["application/json"],
+            "parameters": [
+                {
+                    "name": "body",
+                    "in": "body",
+                    "required": true,
+                    "schema": {
+                        "type": "object",
+                        "properties": {
+                            "items": {
+                                "type": "array",
+                                "items": {
+                                    "type": "object",
+                                    "properties": {
+                                        "type":  { "type": "string" },
+                                        "value": { "type": "string" }
+                                    },
+                                    "required": ["type", "value"],
+                                    "additionalProperties": false
+                                }
+                            }
+                        },
+                        "required": ["items"],
+                        "additionalProperties": false
+                    }
+                }
+            ],
+            "responses": {
+                "200": {
+                    "description": "Preview results",
+                    "schema": { "type": "object" }
+                },
+                "400": {
+                    "description": "Bad request",
+                    "schema": { "type": "object", "properties": { "error": { "type": "string" } } }
+                },
+                "500": {
+                    "description": "Internal server error",
+                    "schema": { "type": "object", "properties": { "error": { "type": "string" } } }
+                }
+            },
+            "x-koha-authorization": {
+                "permissions": { "catalogue": "1" }
+            }
+        }
+    },
     "/lookup": {
         "get": {
             "x-mojo-to": "Com::ByWaterSolutions::FSRecordMetadata::Controller#lookup_record",

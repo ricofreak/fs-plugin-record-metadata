@@ -31,9 +31,10 @@ export default {
     items() {
       const all = [
         { id: "search", label: "Search" },
-        { id: "new", label: "New +" },
-        { id: "create", label: "Scanning/processing (1)" },
-        { id: "create2", label: "Scanning/processing (2)"},
+        { id: "new", label: "Add entry" },
+        { id: "bulknew", label: "Bulk add entry" },
+        { id: "create", label: "Processing - Step 1" },
+        { id: "create2", label: "Processing - Step 2"},
         { id: "problems", label: "Problems" },
         { id: "reports", label: "Queues/reports" },
         { id: "admin", label: "Admin" },

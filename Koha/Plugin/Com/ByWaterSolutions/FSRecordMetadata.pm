@@ -402,6 +402,167 @@ sub create_entry {
     return $dbh->last_insert_id( undef, undef, $table, undef );
 }
 
+sub create_entries {
+    my ( $self, $params ) = @_;
+
+    my $shared = $params->{shared} // {};
+    my @results;
+    my %seen;
+
+    for my $item ( @{ $params->{items} || [] } ) {
+        my $value = $item->{value};
+        my $type  = $item->{type} // 'biblionumber';
+
+        my $result = { input => $value, type => $type };
+
+        my $biblio;
+        if ( $type eq 'barcode' ) {
+            my $koha_item = Koha::Items->find( { barcode => $value } );
+            if ($koha_item) {
+                $biblio = $koha_item->biblio;
+            }
+            else {
+                $result->{status}  = 'not_found';
+                $result->{message} = 'No item with that barcode';
+                push @results, $result;
+                next;
+            }
+        }
+        else {
+            $biblio = Koha::Biblios->find($value);
+        }
+
+        unless ($biblio) {
+            $result->{status}  = 'not_found';
+            $result->{message} = 'No record found';
+            push @results, $result;
+            next;
+        }
+
+        my $biblionumber = $biblio->biblionumber;
+        $result->{biblionumber} = $biblionumber;
+
+        if ( $seen{$biblionumber}++ ) {
+            $result->{status}  = 'duplicate';
+            $result->{message} = 'Repeated in this batch';
+            push @results, $result;
+            next;
+        }
+
+        my $dtn = $biblionumber;
+        $result->{dtn} = $dtn;
+
+        my $existing = $self->search_entries( { dtn => $dtn } );
+        if ( $existing->{total} ) {
+            $result->{status}  = 'dtn_taken';
+            $result->{message} = "An entry with DTN $dtn already exists";
+            push @results, $result;
+            next;
+        }
+
+        my $entry_id = eval {
+            $self->create_entry({
+                biblionumber       => $biblionumber,
+                dtn                => $dtn,
+                owning_institution => $shared->{owning_institution},
+                scan_site          => $shared->{scan_site},
+            });
+        };
+
+        if ($@) {
+            my $err = $@;
+            $err =~ s/\s+at\s+\S+\s+line\s+\d+\.?\s*$//;
+            $result->{status}  = 'error';
+            $result->{message} = $err;
+        }
+        else {
+            $result->{status}   = 'created';
+            $result->{entry_id} = $entry_id;
+        }
+
+        push @results, $result;
+    }
+
+    return \@results;
+}
+
+sub preview_entries {
+    my ( $self, $params ) = @_;
+
+    my @results;
+    my %seen;
+
+    for my $item ( @{ $params->{items} || [] } ) {
+        my $value = $item->{value};
+        my $type  = $item->{type} // 'biblionumber';
+
+        my $result = { input => $value, type => $type };
+
+        my $biblio;
+        if ( $type eq 'barcode' ) {
+            my $koha_item = Koha::Items->find( { barcode => $value } );
+            if ($koha_item) {
+                $biblio = $koha_item->biblio;
+            }
+            else {
+                $result->{status}     = 'not_found';
+                $result->{message}    = 'No item with that barcode';
+                $result->{selectable} = \0;
+                push @results, $result;
+                next;
+            }
+        }
+        else {
+            $biblio = Koha::Biblios->find($value);
+        }
+
+        unless ($biblio) {
+            $result->{status}     = 'not_found';
+            $result->{message}    = 'No record found';
+            $result->{selectable} = \0;
+            push @results, $result;
+            next;
+        }
+
+        my $biblionumber = $biblio->biblionumber;
+        my $dtn          = $biblionumber;
+
+        $result->{biblionumber} = $biblionumber;
+        $result->{dtn}          = $dtn;
+        $result->{title}        = $biblio->title;
+        $result->{author}       = $biblio->author;
+
+        my $resolved = $self->resolve_access_level({ biblio => $biblio });
+        $result->{access} = $resolved->{value};
+
+        if ( $seen{$biblionumber}++ ) {
+            $result->{status}     = 'duplicate';
+            $result->{message}    = 'Repeated in this batch';
+            $result->{selectable} = \0;
+            push @results, $result;
+            next;
+        }
+
+        my $existing = $self->search_entries( { dtn => $dtn } );
+        if ( $existing->{total} ) {
+            $result->{status}     = 'dtn_taken';
+            $result->{message}    = "An entry with DTN $dtn already exists";
+            $result->{selectable} = \0;
+            push @results, $result;
+            next;
+        }
+
+        my $rights = $self->_access_control($biblio);
+        $result->{$_} = $rights->{$_} for keys %$rights;
+
+        $result->{status}     = 'ready';
+        $result->{selectable} = \1;
+        push @results, $result;
+    }
+
+    return \@results;
+}
+
 sub update_entry {
     my ( $self, $entry_id, $params ) = @_;
 
@@ -657,6 +818,36 @@ sub resolve_access_level {
 
     # 4. Set to UNDETERMINED 
     return { value => 'Undetermined', source => 'none' };
+}
+
+our %ACCESS_CONTROL_FIELDS = (
+    privacy_998f   => [ '998', 'f' ],
+    contract_542r  => [ '542', 'r' ],
+    ex_108         => [ '506', 'a' ],
+    copyright_542l => [ '542', 'l' ],
+);
+
+sub _access_control {
+    my ( $self, $biblio ) = @_;
+
+    my %out = map { $_ => '' } keys %ACCESS_CONTROL_FIELDS;
+    return \%out unless $biblio;
+
+    my $record = eval { $biblio->metadata->record };
+    return \%out unless $record;
+
+    for my $key ( keys %ACCESS_CONTROL_FIELDS ) {
+        my ( $tag, $sub ) = @{ $ACCESS_CONTROL_FIELDS{$key} };
+        my @values;
+        for my $field ( $record->field($tag) ) {
+            for my $value ( $field->subfield($sub) ) {
+                push @values, $value if defined $value && length $value;
+            }
+        }
+        $out{$key} = join '; ', @values;
+    }
+
+    return \%out;
 }
 
 sub search_staff {

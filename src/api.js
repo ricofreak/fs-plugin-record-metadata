@@ -43,6 +43,12 @@ export const getEntriesPaged = async (params) => {
 export const createEntry = (body) =>
   apiFetch('/entries', { method: 'POST', body: JSON.stringify(body) }).then((r) => r.json());
 
+export const createEntries = (body) =>
+  apiFetch("/entries/bulk", { method: "POST", body: JSON.stringify(body) }).then((r) => r.json());
+
+export const previewEntries = (body) =>
+  apiFetch("/entries/preview", { method: "POST", body: JSON.stringify(body) }).then((r) => r.json());
+
 export const updateEntry = (id, body) =>
   apiFetch(`/entries/${id}`, { method: 'PUT', body: JSON.stringify(body) }).then((r) => r.json());
 

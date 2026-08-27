@@ -100,6 +100,53 @@ sub create_entry {
     };
 }
 
+sub create_entries {
+    my $c = shift->openapi->valid_input or return;
+
+    my $body = $c->validation->param('body');
+
+    return try {
+        my $plugin  = Koha::Plugin::Com::ByWaterSolutions::FSRecordMetadata->new;
+        my $results = $plugin->create_entries({
+            items  => $body->{items},
+            shared => {
+                owning_institution => $body->{owning_institution},
+                scan_site          => $body->{scan_site},
+            },
+        });
+
+        my %summary = ( created => 0, skipped => 0, failed => 0 );
+        for my $r (@$results) {
+            if    ( $r->{status} eq 'created' ) { $summary{created}++ }
+            elsif ( $r->{status} eq 'error' )   { $summary{failed}++ }
+            else                                { $summary{skipped}++ }
+        }
+
+        return $c->render(
+            status  => 200,
+            openapi => { summary => \%summary, results => $results }
+        );
+    }
+    catch {
+        return $c->render( status => 500, openapi => { error => "Something went wrong: $_" } );
+    };
+}
+
+sub preview_entries {
+    my $c = shift->openapi->valid_input or return;
+
+    my $body = $c->validation->param('body');
+
+    return try {
+        my $plugin  = Koha::Plugin::Com::ByWaterSolutions::FSRecordMetadata->new;
+        my $results = $plugin->preview_entries({ items => $body->{items} });
+        return $c->render( status => 200, openapi => { results => $results } );
+    }
+    catch {
+        return $c->render( status => 500, openapi => { error => "Something went wrong: $_" } );
+    };
+}
+
 sub update_entry {
     my $c = shift->openapi->valid_input or return;
 

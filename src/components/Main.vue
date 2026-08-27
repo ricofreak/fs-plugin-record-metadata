@@ -3,6 +3,7 @@
     <NavBar :current="view" @navigate="view = $event" />
     <SearchView v-if="view === 'search'" @select="openEntry" />
     <CreateView v-if="view === 'new'" @created="openEntry" />
+    <BulkCreateView v-if="view === 'bulknew'" @created="openEntry" />
     <ScanningViewOne
       v-if="view === 'create'"
       :entry="entry"
@@ -24,13 +25,14 @@
 <script>
 import SearchView from "./SearchView.vue";
 import CreateView from "./CreateView.vue";
+import BulkCreateView from "./BulkCreateView.vue";
 import ScanningViewOne from "./ScanningViewOne.vue";
 import ScanningViewTwo from "./ScanningViewTwo.vue";
 import ProblemsView from "./ProblemsView.vue";
 
 export default {
   name: "Main",
-  components: { SearchView, CreateView, ScanningViewOne, ScanningViewTwo, ProblemsView },
+  components: { SearchView, CreateView, BulkCreateView, ScanningViewOne, ScanningViewTwo, ProblemsView },
   data() {
     return { view: "search", entry: null };
   },
