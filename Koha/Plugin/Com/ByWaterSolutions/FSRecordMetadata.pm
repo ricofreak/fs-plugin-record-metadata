@@ -828,7 +828,15 @@ sub resolve_access_level {
         return { value => $access, source => '506a' } if defined $access;
     }
 
-    # 4. Set to UNDETERMINED 
+    #4 check the 542l 
+    for my $field ( $record->field('542') ) {
+        my $l = $field->subfield('l');
+        next unless defined $l && length $l;
+        my $access = $self->_access_from_copyright_status($l);
+        return { value => $access, source => '542l' } if defined $access;
+    }
+
+    # 5. Set to UNDETERMINED 
     return { value => 'Undetermined', source => 'none' };
 }
 
@@ -1042,6 +1050,24 @@ sub _access_from_section_108 {
 
     #if we return undef, its time to  move on, time to get going
     return undef;
+}
+
+my %COPYRIGHT_STATUS_ACCESS = (
+    PD => 'Public',
+    IC => 'Protected',
+);
+
+sub _access_from_copyright_status {
+    my ( $self, $value ) = @_;
+    return undef unless defined $value && length $value;
+
+    my ($token) = split /\s+/, $value;
+    return undef unless defined $token;
+
+    my ($prefix) = $token =~ /^(PD|IC)\b/i;
+    return undef unless $prefix;
+
+    return $COPYRIGHT_STATUS_ACCESS{ uc($prefix) };
 }
 
 sub _inject_body_properties {

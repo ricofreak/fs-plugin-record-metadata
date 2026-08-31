@@ -1,5 +1,5 @@
 <template>
-  <li :title="sourceLabel">
+  <li class="fsrm-access-level" :title="sourceLabel">
     <label for="access_level">Access level: </label>
     <span id="access_level" class="fsrm-access-level" :class="'fsrm-access-' + slug">
       {{ value || 'Undetermined' }}
@@ -30,3 +30,8 @@ export default {
   },
 };
 </script>
+<style>
+    .fsrm-access-level {
+        background: #ffffc5;
+    }
+</style>
