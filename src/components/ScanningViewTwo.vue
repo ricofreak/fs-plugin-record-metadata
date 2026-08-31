@@ -18,9 +18,9 @@
       </fieldset>
 
       <fieldset  class="rows">
-      <AccessLevel :value="selected.access" :source="selected.access_source" />
         <div id="scanform_step2">
             <ol>
+              <AccessLevel :value="selected.access" :source="selected.access_source" />
               <li>
                 <label for="dtn">Digital title number:</label>
                 <input id="dtn" :value="selected.dtn" readonly disabled />

@@ -1,15 +1,17 @@
 <template>
-  <div class="fsrm-access-level" :class="'fsrm-access-' + slug">
-    <div class="fsrm-access-label">Access level</div>
-    <div class="fsrm-access-value"><strong>{{ value || 'Undetermined' }}</strong></div>
-    <div v-if="source" class="fsrm-access-source">{{ sourceLabel }}</div>
-  </div>
+  <li :title="sourceLabel">
+    <label for="access_level">Access level: </label>
+    <span id="access_level" class="fsrm-access-level" :class="'fsrm-access-' + slug">
+      {{ value || 'Undetermined' }}
+    </span>
+  </li>
 </template>
 
 <script>
 const SOURCE_LABELS = {
   "998f": "from 998$f",
   "542r": "from 542$r",
+  "506a": "from 506$a",
   contract: "from contract permission",
   none: "not yet determined",
 };
@@ -28,11 +30,3 @@ export default {
   },
 };
 </script>
-<style>
-    .fsrm-access-level {
-      padding: .6rem 1rem;
-      margin: 0 0 1rem 0;
-      background: #FFFFC5;
-      color: #666;
-    }
-</style>

@@ -45,7 +45,7 @@
     </fieldset>
 
     <div v-if="selected">
-      <h2>DTN: {{ selected.dtn }}</h2>
+      <h2>Digitial title number: {{ selected.dtn }}</h2>
 
       <slot
         name="fields"

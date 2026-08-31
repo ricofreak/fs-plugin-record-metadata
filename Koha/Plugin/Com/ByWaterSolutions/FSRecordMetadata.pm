@@ -804,7 +804,7 @@ sub resolve_access_level {
     my $record = eval { $biblio->metadata->record };
     return { value => 'Undetermined', source => 'none' } unless $record;
 
-    # 1. Look at 998f first
+    # 1. Look at 998f first, if it exists check for term like ADULT CHILD DECEASED
     for my $field ( $record->field('998') ) {
         my $f = $field->subfield('f');
         next unless defined $f && length $f;
@@ -812,9 +812,21 @@ sub resolve_access_level {
             if $self->_is_term_in_998f($f);
     }
 
-    # 2. look at 506$a
+    #2. Now look for particular codes in the 542r 
+    for my $field ( $record->field('542') ) {
+        my $r = $field->subfield('r');
+        next unless defined $r && length $r;
+        my $access = $self->_access_from_contract_code($r);
+        return { value => $access, source => '542r' } if defined $access;
+    }
 
-    # 3. look at 542$i 
+    # 3. Now check the 506a text for  
+    for my $field ( $record->field('506') ) {
+        my $a = $field->subfield('a');
+        next unless defined $a && length $a;
+        my $access = $self->_access_from_section_108($a);
+        return { value => $access, source => '506a' } if defined $access;
+    }
 
     # 4. Set to UNDETERMINED 
     return { value => 'Undetermined', source => 'none' };
@@ -954,6 +966,7 @@ sub authorised_values_for_fields {
     return \%out;
 }
 
+#match strings in 998f to certain terms defined here  
 sub _is_term_in_998f {
     my ( $self, $value ) = @_;
     return 0 unless defined $value && length $value;
@@ -963,6 +976,72 @@ sub _is_term_in_998f {
         return 1 if $value =~ /\b\Q$term\E\b/i;
     }
     return 0;
+}
+
+our @CONTRACT_CODE_RULES = (
+    { j => 'J9', k => [],               access => 'Denied' },
+    { j => 'J1', k => [ 'K2a', 'K2q' ], access => 'FSL Purchase' },
+    { j => 'J1', k => [ 'K2a', 'K6'  ], access => 'Purchase' },
+    { j => 'J1', k => [ 'K1'  ],        access => 'Public' },
+    { j => 'J1', k => [ 'K3'  ],        access => 'Full Permission' },
+    { j => 'J1', k => [ 'K3a' ],        access => 'Limited Permission' },
+    { j => 'J1', k => [ 'K2j' ],        access => 'Protected' },
+    { j => 'J1', k => [ 'K2a' ],        access => 'Logged in Permission' },
+    { j => 'J1', k => [ 'K2h' ],        access => 'Denied' },
+);
+
+sub _access_from_contract_code {
+    my ( $self, $value ) = @_;
+    return undef unless defined $value && length $value;
+    
+    #splitting each set in to it's own token for examining 
+    my @tokens = split /\s+/, $value;
+    
+    #looking at the contracts containing 'J', if we don't have this we move on 
+    my ($j) = grep { /^J\d+[a-z]*$/i } @tokens;
+    return undef unless $j;
+
+    #find 'K' contracts, and match them 
+    my @k = grep { /^K\d+[a-z]*$/i } @tokens;
+    
+    #CONTRACT_CODE_RULES defined by our @CONTRACT_CODE_RULES
+    for my $rule (@CONTRACT_CODE_RULES) {
+        next unless uc($j) eq uc( $rule->{j} );
+
+        my @want = @{ $rule->{k} };
+        next unless scalar(@k) == scalar(@want);
+
+        my %have = map { uc($_) => 1 } @k;
+        my $matched = 1;
+        for my $code (@want) {
+            unless ( $have{ uc($code) } ) { $matched = 0; last }
+        }
+
+        return $rule->{access} if $matched;
+    }
+
+    #if we return undef, its time to  move on, time to get going, what lies ahead we have no way of knowing  
+    return undef;
+}
+
+my @SECTION_108_RULES = (
+    { subsection => 'h', access => '108h Exception' },
+    { subsection => 'c', access => '108c Exception' },
+);
+
+sub _access_from_section_108 {
+    my ( $self, $value ) = @_;
+    return undef unless defined $value && length $value;
+    
+    #look at the 506a for either 108h or 108c in the text, if so match 
+    #SECTION_108_RULES defined by my @SECTION_108_RULES
+    for my $rule (@SECTION_108_RULES) {
+        return $rule->{access}
+            if $value =~ /108\s*\(\s*\Q$rule->{subsection}\E\s*\)/i;
+    }
+
+    #if we return undef, its time to  move on, time to get going
+    return undef;
 }
 
 sub _inject_body_properties {
