@@ -424,7 +424,7 @@ sub create_entries {
     for my $item ( @{ $params->{items} || [] } ) {
         my $value = $item->{value};
         my $type  = $item->{type} // 'biblionumber';
-        my $itemnumber = $item->itemnumber;
+        my $itemnumber = $item->{itemnumber};
 
         my $result = { input => $value, type => $type };
 
@@ -434,7 +434,7 @@ sub create_entries {
             if ($koha_item) {
                 $biblio = $koha_item->biblio;
                 $itemnumber = $koha_item->itemnumber;
-                $result->{itemnumber} = $koha_item->itemnumber;
+                $result->{itemnumber} = $itemnumber;
             }
             else {
                 $result->{status}  = 'not_found';

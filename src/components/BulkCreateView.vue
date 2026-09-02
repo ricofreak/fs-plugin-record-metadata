@@ -145,13 +145,6 @@ export default {
       }
     },
     async create() {
-
-    const chosen = this.rows.filter((r) => r.selected).map((r) => ({
-      type: "biblionumber",
-      value: String(r.biblionumber),
-      itemnumber: r.itemnumber || null,
-    }));
-
       this.saving = true;
       this.error = null;
       try {
@@ -160,7 +153,7 @@ export default {
         const body = await createEntries({
           owning_institution: this.owningInstitution || null,
           scan_site: this.scanSite || null,
-          items: chosen.map((r) => ({ type: "biblionumber", value: String(r.biblionumber) })),
+          items: chosen.map((r) => ({ type: "biblionumber", value: String(r.biblionumber), itemnumber: r.itemnumber || null })),
         });
 
         this.summary = body.summary || { created: 0, skipped: 0, failed: 0 };
