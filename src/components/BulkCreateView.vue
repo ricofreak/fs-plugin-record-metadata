@@ -145,6 +145,13 @@ export default {
       }
     },
     async create() {
+
+    const chosen = this.rows.filter((r) => r.selected).map((r) => ({
+      type: "biblionumber",
+      value: String(r.biblionumber),
+      itemnumber: r.itemnumber || null,
+    }));
+
       this.saving = true;
       this.error = null;
       try {

@@ -251,6 +251,7 @@ export default {
       try {
         const payload = {
           biblionumber: this.record.biblionumber,
+          itemnumber: this.record.itemnumber || null,
           dtn: this.dtn || null,
           owning_institution: this.entry.owning_institution || null,
           volume_description: this.entry.volume_description || null,

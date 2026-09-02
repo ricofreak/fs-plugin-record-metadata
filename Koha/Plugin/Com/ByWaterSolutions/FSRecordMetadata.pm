@@ -89,6 +89,7 @@ our %PROBLEM_COLUMNS = (
 our %CREATE_ONLY_COLUMNS = (
     biblionumber => 'integer',
     dtn          => 'string',
+    itemnumber   => 'integer',
 );
 
 #fields that will be tied to an AV
@@ -122,6 +123,7 @@ sub install {
             CREATE TABLE `$entries_table` (
                 entry_id             INT(11) NOT NULL AUTO_INCREMENT,
                 biblionumber         INT(11) NOT NULL,
+                itemnumber           INT(11) NULL,
                 dtn                  VARCHAR(64) NULL,
                 secondary_identifier VARCHAR(64) NULL,
                 owning_institution   VARCHAR(80) NULL,
@@ -185,6 +187,7 @@ sub install {
                 INDEX (`scan_date`),
                 INDEX (`access`),
                 INDEX (`pdf_loaded_date`),
+                INDEX (`itemnumber`),
                 CONSTRAINT `fs_record_metadata_entries_ibfk_1` FOREIGN KEY (`biblionumber`)
                     REFERENCES `biblio` (`biblionumber`) ON DELETE CASCADE ON UPDATE CASCADE
             ) ENGINE = INNODB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -336,12 +339,21 @@ sub search_entries {
                    e.ocr_date             IS NOT NULL AS ocr,
                    e.pdf_loaded_date      IS NOT NULL AS published,
                    e.review_complete_date IS NOT NULL AS online_review,
-                   (SELECT GROUP_CONCAT(i.barcode ORDER BY i.barcode SEPARATOR ', ')
-                    FROM items i WHERE i.biblionumber = e.biblionumber) AS barcodes,
-                   (SELECT GROUP_CONCAT(DISTINCT i.itemcallnumber SEPARATOR ', ')
-                    FROM items i WHERE i.biblionumber = e.biblionumber) AS callnumbers,
-                   (SELECT GROUP_CONCAT(DISTINCT i.itype SEPARATOR ', ')
-                    FROM items i WHERE i.biblionumber = e.biblionumber) AS itypes,
+                   IF(e.itemnumber IS NULL,
+                      (SELECT GROUP_CONCAT(i.barcode ORDER BY i.barcode SEPARATOR ', ')
+                       FROM items i WHERE i.biblionumber = e.biblionumber),
+                      (SELECT i.barcode FROM items i WHERE i.itemnumber = e.itemnumber)
+                   ) AS barcodes,
+                   IF(e.itemnumber IS NULL,
+                      (SELECT GROUP_CONCAT(DISTINCT i.itemcallnumber SEPARATOR ', ')
+                       FROM items i WHERE i.biblionumber = e.biblionumber),
+                      (SELECT i.itemcallnumber FROM items i WHERE i.itemnumber = e.itemnumber)
+                   ) AS callnumbers,
+                   IF(e.itemnumber IS NULL,
+                      (SELECT GROUP_CONCAT(DISTINCT i.itype SEPARATOR ', ')
+                       FROM items i WHERE i.biblionumber = e.biblionumber),
+                      (SELECT i.itype FROM items i WHERE i.itemnumber = e.itemnumber)
+                   ) AS itypes,
                    (SELECT GROUP_CONCAT(
                         CONCAT(p.problem_id, ':', IF(p.resolved_on IS NULL, '1', '0'))
                         ORDER BY p.problem_id SEPARATOR ',')
@@ -412,6 +424,7 @@ sub create_entries {
     for my $item ( @{ $params->{items} || [] } ) {
         my $value = $item->{value};
         my $type  = $item->{type} // 'biblionumber';
+        my $itemnumber = $item->itemnumber;
 
         my $result = { input => $value, type => $type };
 
@@ -420,6 +433,8 @@ sub create_entries {
             my $koha_item = Koha::Items->find( { barcode => $value } );
             if ($koha_item) {
                 $biblio = $koha_item->biblio;
+                $itemnumber = $koha_item->itemnumber;
+                $result->{itemnumber} = $koha_item->itemnumber;
             }
             else {
                 $result->{status}  = 'not_found';
@@ -463,6 +478,7 @@ sub create_entries {
         my $entry_id = eval {
             $self->create_entry({
                 biblionumber       => $biblionumber,
+                itemnumber         => $itemnumber,
                 dtn                => $dtn,
                 owning_institution => $shared->{owning_institution},
                 scan_site          => $shared->{scan_site},
@@ -495,14 +511,17 @@ sub preview_entries {
     for my $item ( @{ $params->{items} || [] } ) {
         my $value = $item->{value};
         my $type  = $item->{type} // 'biblionumber';
+        my $itemnumber = $item->{itemnumber};
 
         my $result = { input => $value, type => $type };
 
         my $biblio;
         if ( $type eq 'barcode' ) {
             my $koha_item = Koha::Items->find( { barcode => $value } );
-            if ($koha_item) {
+            if ( $koha_item ) { 
                 $biblio = $koha_item->biblio;
+                $itemnumber = $koha_item->itemnumber;
+                $result->{itemnumber} = $koha_item->itemnumber;
             }
             else {
                 $result->{status}     = 'not_found';
@@ -711,19 +730,22 @@ sub get_record_details {
     my ( $self, $params ) = @_;
 
     my $biblio;
-
+    my $itemnumber;
+    my @items;
     if ( $params->{barcode} ) {
         my $item = Koha::Items->find( { barcode => $params->{barcode} } );
         return unless $item;
         $biblio = $item->biblio;
+        $itemnumber = $item->itemnumber;
+        @items  = ($item);
     }
     elsif ( $params->{biblionumber} ) {
         $biblio = Koha::Biblios->find( $params->{biblionumber} );
+        @items  = $biblio ? $biblio->items->as_list : ();
     }
-    
+
     return unless $biblio;
 
-    my @items = $biblio->items->as_list;
     my $record = $biblio->metadata->record;
 
    my $title = join ' ', grep { defined && length }
@@ -754,27 +776,11 @@ sub get_record_details {
         };
     }
 
-    my %marc_fields = (
-        privacy_998f      => [ '998', 'f' ],
-        contract_542r  => [ '542', 'r' ],
-        ex_108    => [ '506', 'a' ],
-        copyright_542l  => [ '542', 'l' ],
-    );
-
-    my %extra;
-    for my $key ( keys %marc_fields ) {
-        my ( $tag, $sub ) = @{ $marc_fields{$key} };
-        my @values;
-        for my $field ( $record->field($tag) ) {
-            for my $value ( $field->subfield($sub) ) {
-                push @values, $value if defined $value && length $value;
-            }
-        }
-        $extra{$key} = join '; ', @values;
-    }
+    my $access_control = $self->_access_control($biblio);
 
     return {
         biblionumber     => $biblio->biblionumber,
+        itemnumber       => $itemnumber,
         title            => $title,
         author           => $author,
         publication_date => $pub_date,
@@ -791,7 +797,7 @@ sub get_record_details {
                 }
             } @items
         ],
-        %extra,
+        %$access_control,
     };
 }
 
