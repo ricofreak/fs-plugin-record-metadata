@@ -72,7 +72,7 @@ export default {
       return {
         serverSide: true,
         processing: true,
-        searching: false,
+        searching: true,
         ordering: true,
         pageLength: 50,
         lengthMenu: [25, 50, 100],
@@ -86,6 +86,9 @@ export default {
             const params = { _page: page, _per_page: data.length };
 
             const order = data.order && data.order[0];
+            
+            if (data.search && data.search.value) params.q = data.search.value;
+
             if (order) {
               params._order_by = data.columns[order.column].name;
               params._order_dir = order.dir;

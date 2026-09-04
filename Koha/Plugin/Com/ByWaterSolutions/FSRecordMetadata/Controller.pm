@@ -173,6 +173,7 @@ sub update_entry {
 
 sub list_problems {
     my $c = shift->openapi->valid_input or return;
+    my $q = $c->validation->param('q');
 
     my $status   = $c->validation->param('status');
     my $entry_id = $c->validation->param('entry_id');
@@ -185,7 +186,7 @@ sub list_problems {
     return try {
         my $plugin = Koha::Plugin::Com::ByWaterSolutions::FSRecordMetadata->new;
         my $result = $plugin->search_problems(
-            { status => $status, entry_id => $entry_id, problem_id => $problem_id },
+            { status => $status, entry_id => $entry_id, problem_id => $problem_id, q => $q },
             { page   => $page,   per_page => $per_page, sort_by => $sort_by, sort_dir => $sort_dir }
         );
 

@@ -316,11 +316,13 @@ sub search_entries {
         push @where, "$columns{$key} = ?";
         push @binds, $filters->{$key};
     }
+
     if ( defined $filters->{barcode} ) {
         push @where,
             'e.biblionumber IN (SELECT i.biblionumber FROM items i WHERE i.barcode = ?)';
         push @binds, $filters->{barcode};
     }
+
     my $where = @where ? 'WHERE ' . join( ' AND ', @where ) : '';
 
     my $from = qq{
@@ -653,6 +655,21 @@ sub search_problems {
         push @where, "$columns{$key} = ?";
         push @binds, $filters->{$key};
     }
+
+    if ( defined $filters->{q} && length $filters->{q} ) {
+        my @search_columns = (
+            'p.status',
+            'p.problem_type',
+            'e.dtn',
+            'b.title',
+            'CAST(e.biblionumber AS CHAR)',
+        );
+
+        my $like = '%' . $filters->{q} . '%';
+        push @where, '(' . join( ' OR ', map { "$_ LIKE ?" } @search_columns ) . ')';
+        push @binds, ($like) x scalar(@search_columns);
+    }
+
     my $where = @where ? 'WHERE ' . join( ' AND ', @where ) : '';
 
     my $from = qq{
