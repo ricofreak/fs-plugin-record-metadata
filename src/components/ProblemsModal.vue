@@ -1,6 +1,8 @@
 <template>
-  <div class="modal fade show fsrm-modal-backdrop" style="display: block;" @click.self="$emit('cancel')">
-    <div class="modal-dialog modal-xl">
+  <div>
+  <div class="modal-backdrop fade show"></div>
+  <div class="modal fade show block modal-xl" data-bs-backdrop="static" data-bs-keyboard="false" style="display: block;">
+    <div class="modal-dialog">
       <div class="modal-content">
         <div class="modal-header">
           <h5 class="modal-title">{{ isEdit ? 'Edit problem ' + problemId : 'Add problem' }} — {{ dtn }}</h5>
@@ -66,6 +68,7 @@
         </div>
       </div>
     </div>
+  </div>
   </div>
 </template>
 
