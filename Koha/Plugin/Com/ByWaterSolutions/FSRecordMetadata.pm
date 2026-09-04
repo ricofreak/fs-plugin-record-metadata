@@ -633,6 +633,20 @@ sub search_problems {
         problem_type => 'p.problem_type',
     );
 
+    my %sortable = (
+        problem_id          => 'p.problem_id',
+        biblionumber        => 'e.biblionumber',
+        dtn                 => 'e.dtn',
+        title               => 'b.title',
+        status              => 'p.status',
+        problem_type        => 'p.problem_type',
+        problem_date        => 'p.problem_date',
+        solution_date       => 'p.solution_date',
+    );
+
+    my $sort_col = $sortable{ $opts->{sort_by} // '' } || 'p.problem_id';
+    my $sort_dir = ( lc( $opts->{sort_dir} // '' ) eq 'asc' ) ? 'ASC' : 'DESC';
+
     my ( @where, @binds );
     for my $key ( keys %columns ) {
         next unless defined $filters->{$key};
@@ -661,7 +675,7 @@ sub search_problems {
                    b.title,
                    b.author
             $from
-            ORDER BY p.problem_id DESC
+            ORDER BY $sort_col $sort_dir
             LIMIT ? OFFSET ?
         },
         { Slice => {} },

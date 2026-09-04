@@ -179,12 +179,14 @@ sub list_problems {
     my $problem_id = $c->validation->param('problem_id');
     my $page     = $c->validation->param('_page');
     my $per_page = $c->validation->param('_per_page');
+    my $sort_by  = $c->validation->param('_order_by');
+    my $sort_dir = $c->validation->param('_order_dir');
 
     return try {
         my $plugin = Koha::Plugin::Com::ByWaterSolutions::FSRecordMetadata->new;
         my $result = $plugin->search_problems(
             { status => $status, entry_id => $entry_id, problem_id => $problem_id },
-            { page   => $page,   per_page => $per_page }
+            { page   => $page,   per_page => $per_page, sort_by => $sort_by, sort_dir => $sort_dir }
         );
 
         $c->res->headers->add( 'X-Total-Count' => $result->{total} );

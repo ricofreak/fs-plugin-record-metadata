@@ -73,7 +73,7 @@ export default {
         serverSide: true,
         processing: true,
         searching: false,
-        ordering: false,
+        ordering: true,
         pageLength: 50,
         lengthMenu: [25, 50, 100],
         createdRow: (row, data) => {
@@ -83,10 +83,15 @@ export default {
         ajax: async (data, callback) => {
           try {
             const page = Math.floor(data.start / data.length) + 1;
-            const { rows, total } = await getProblemsPaged({
-              _page: page,
-              _per_page: data.length,
-            });
+            const params = { _page: page, _per_page: data.length };
+
+            const order = data.order && data.order[0];
+            if (order) {
+              params._order_by = data.columns[order.column].name;
+              params._order_dir = order.dir;
+            }
+
+            const { rows, total } = await getProblemsPaged(params);
             callback({
               draw: data.draw,
               data: rows,
@@ -99,16 +104,16 @@ export default {
           }
         },
         columns: [
-          { data: 'problem_id' },
-          { data: 'biblionumber' },
-          { data: 'dtn', defaultContent: '' },
-          { data: 'title', defaultContent: '' },
-          { data: 'status', defaultContent: '' },
-          { data: 'problem_type', defaultContent: '' },
-          { data: 'problem_description', defaultContent: '' },
-          { data: 'problem_date', defaultContent: '' },
-          { data: 'solution', defaultContent: '' },
-          { data: 'solution_date', defaultContent: '' },
+          { data: 'problem_id', name: 'problem_id' },
+          { data: 'biblionumber', name: 'biblionumber' },
+          { data: 'dtn', name: 'dtn', defaultContent: '' },
+          { data: 'title', name: 'title', defaultContent: '' },
+          { data: 'status', name: 'status', defaultContent: '' },
+          { data: 'problem_type', name: 'problem_type', defaultContent: '' },
+          { data: 'problem_description', name: 'problem_description', orderable: false, defaultContent: '' },
+          { data: 'problem_date', name: 'problem_date', defaultContent: '' },
+          { data: 'solution', name: 'solution', orderable: false, defaultContent: '' },
+          { data: 'solution_date', name: 'solution_date', defaultContent: '' },
         ],
       };
     },
