@@ -47,6 +47,10 @@ our %ENTRY_COLUMNS = (
     images_sent_by       => 'integer',
     images_sent_date     => 'string',
 
+    new_scanned_image_count => 'integer',
+    images_resent_by        => 'integer',
+    images_resent_date      => 'string',
+
     ocr_site             => 'string',
     ocr_date             => 'string',
 
@@ -150,6 +154,10 @@ sub install {
 
                 images_sent_by       INT(11) NULL,
                 images_sent_date     DATE NULL,
+
+                new_scanned_image_count INT(11) NULL,
+                images_resent_by     INT(11) NULL,
+                images_resent_date   DATE NULL,
 
                 ocr_site             VARCHAR(80) NULL,
                 ocr_date             DATE NULL,

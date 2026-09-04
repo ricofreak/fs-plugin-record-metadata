@@ -120,6 +120,18 @@
                 <label for="images_sent_date">Image sent date:</label>
                 <DateField id="images_sent_date" label="Image sent date" v-model="form.images_sent_date" />
               </li>
+              <li style="margin-top: 1em">
+                <label for="new_scanned_image_count">New scanned images count:</label>
+                <input type="number"  id="new_scanned_image_count" v-model="form.new_scanned_image_count" />
+              </li>
+              <li>
+                <label for="images_resent_by">Images resent by:</label>
+                <StaffPicker id="images_resent_by" label="Images resent by" v-model="form.images_resent_by" v-model:displayName="names.images_resent_by" />
+              </li>
+              <li>
+                <label for="images_resent_date">Images resent date:</label>
+                <DateField id="images_resent_date" label="Images resent date" v-model="form.images_resent_date" />
+              </li>
             </ol>
         </div>
       </fieldset>
@@ -160,6 +172,9 @@ export default {
         "audit_date_2",
         "images_sent_by",
         "images_sent_date",
+        "new_scanned_image_count",
+        "images_resent_by",
+        "images_resent_date"
       ],
     };
   },
