@@ -373,17 +373,7 @@
                     "required": true,
                     "schema": {
                         "type": "object",
-                        "properties": {
-                            "entry_id":       { "type": "integer" },
-                            "step":           { "type": ["string", "null"] },
-                            "status":         { "type": ["string", "null"] },
-                            "reason":         { "type": ["string", "null"] },
-                            "description":    { "type": ["string", "null"] },
-                            "problem_date":   { "type": ["string", "null"] },
-                            "initials":       { "type": ["string", "null"] },
-                            "reported_by":    { "type": ["integer", "null"] },
-                            "solution_owner": { "type": ["integer", "null"] }
-                        },
+                        "properties": {},
                         "required": ["entry_id"],
                         "additionalProperties": false
                     }
@@ -415,17 +405,7 @@
                     "required": true,
                     "schema": {
                         "type": "object",
-                        "properties": {
-                            "step":           { "type": ["string", "null"] },
-                            "status":         { "type": ["string", "null"] },
-                            "reason":         { "type": ["string", "null"] },
-                            "description":    { "type": ["string", "null"] },
-                            "problem_date":   { "type": ["string", "null"] },
-                            "initials":       { "type": ["string", "null"] },
-                            "reported_by":    { "type": ["integer", "null"] },
-                            "solution_owner": { "type": ["integer", "null"] },
-                            "resolved_on":    { "type": ["string", "null"] }
-                        },
+                        "properties": {},
                         "additionalProperties": false
                     }
                 }

@@ -74,16 +74,17 @@ our %ENTRY_COLUMNS = (
     images_removed_notes => 'string',
 );
 
-our %PROBLEM_COLUMNS = (
-    entry_id       => 'integer',
-    step           => 'string',
-    reason         => 'string',
-    description    => 'string',
-    problem_date   => 'string',
-    reported_by    => 'integer',
-    initials       => 'string',
-    solution_owner => 'integer',
-    resolved_on    => 'string',
+my %PROBLEM_COLUMNS = (
+    entry_id            => 'integer',
+    status              => 'string',
+    problem_type        => 'string',
+    problem_description => 'string',
+    reported_by         => 'integer',
+    problem_date        => 'string',
+    solution_owner      => 'integer',
+    solution            => 'string',
+    solution_date       => 'string',
+    fixed_by            => 'integer',
 );
 
 our %CREATE_ONLY_COLUMNS = (
@@ -98,8 +99,8 @@ our %AV_FIELDS = (
     scan_site          => 'Scan site',
     scan_machine       => 'Scan machine',
     ocr_site           => 'OCR site',
-    problem_step       => 'Problem step',
-    problem_reason     => 'Problem reason',
+    problem_status => 'Problem status',
+    problem_type   => 'Problem type',
 );
 
 sub new {
@@ -197,23 +198,26 @@ sub install {
     unless ( TableExists($problems_table) ) {
         $dbh->do("
             CREATE TABLE `$problems_table` (
-                problem_id     INT(11) NOT NULL AUTO_INCREMENT,
-                entry_id       INT(11) NOT NULL,
-                step           VARCHAR(80) NULL,
-                reason         VARCHAR(80) NULL,
-                description    TEXT NULL,
-                problem_date   DATE NULL,
-                reported_by    INT(11) NULL,
-                initials       VARCHAR(16) NULL,
-                solution_owner INT(11) NULL,
-                resolved_on    DATE NULL,
-                created_on     TIMESTAMP NOT NULL DEFAULT current_timestamp(),
-                created_user   INT(11) NULL,
-                updated_on     TIMESTAMP NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
-                updated_user   INT(11) NULL,
+                problem_id          INT(11) NOT NULL AUTO_INCREMENT,
+                entry_id            INT(11) NOT NULL,
+                status              VARCHAR(80) NULL,
+                problem_type        VARCHAR(80) NULL,
+                problem_description TEXT NULL,
+                reported_by         INT(11) NULL,
+                problem_date        DATE NULL,
+                solution_owner      INT(11) NULL,
+                solution            TEXT NULL,
+                solution_date       DATE NULL,
+                fixed_by            INT(11) NULL,
+                created_on          TIMESTAMP NOT NULL DEFAULT current_timestamp(),
+                created_user        INT(11) NULL,
+                updated_on          TIMESTAMP NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+                updated_user        INT(11) NULL,
                 PRIMARY KEY (`problem_id`),
                 INDEX (`entry_id`),
                 INDEX (`problem_date`),
+                INDEX (`solution_date`),
+                INDEX (`status`),
                 CONSTRAINT `fs_record_metadata_problems_ibfk_1` FOREIGN KEY (`entry_id`)
                     REFERENCES `$entries_table` (`entry_id`) ON DELETE CASCADE ON UPDATE CASCADE
             ) ENGINE = INNODB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -355,7 +359,7 @@ sub search_entries {
                       (SELECT i.itype FROM items i WHERE i.itemnumber = e.itemnumber)
                    ) AS itypes,
                    (SELECT GROUP_CONCAT(
-                        CONCAT(p.problem_id, ':', IF(p.resolved_on IS NULL, '1', '0'))
+                        CONCAT(p.problem_id, ':', IF(p.solution_date IS NULL, '1', '0'))
                         ORDER BY p.problem_id SEPARATOR ',')
                     FROM `$problems_table` p
                     WHERE p.entry_id = e.entry_id) AS problem_numbers
@@ -623,10 +627,10 @@ sub search_problems {
     my $dbh            = C4::Context->dbh;
 
     my %columns = (
-        problem_id => 'p.problem_id',
-        entry_id   => 'p.entry_id',
-        status     => 'p.status',
-        step       => 'p.step',
+        problem_id   => 'p.problem_id',
+        entry_id     => 'p.entry_id',
+        status       => 'p.status',
+        problem_type => 'p.problem_type',
     );
 
     my ( @where, @binds );
@@ -655,8 +659,7 @@ sub search_problems {
                    e.ocr_site,
                    e.scan_date,
                    b.title,
-                   b.author,
-                   IF(p.resolved_on IS NULL, 'Open', 'Closed') AS status
+                   b.author
             $from
             ORDER BY p.problem_id DESC
             LIMIT ? OFFSET ?
@@ -949,6 +952,17 @@ sub api_routes {
 
     _inject_body_properties( $spec, '/entries',            'post', \%create_props );
     _inject_body_properties( $spec, '/entries/{entry_id}', 'put',  \%update_props );
+
+    my %problem_props;
+    for my $col ( keys %PROBLEM_COLUMNS ) {
+        next if $col eq 'entry_id';
+        $problem_props{$col} = { type => [ $PROBLEM_COLUMNS{$col}, 'null' ] };
+    }
+
+    my %problem_create_props = ( %problem_props, entry_id => { type => 'integer' } );
+
+    _inject_body_properties( $spec, '/problems',              'post', \%problem_create_props );
+    _inject_body_properties( $spec, '/problems/{problem_id}', 'put',  \%problem_props );
 
     return $spec;
 }
