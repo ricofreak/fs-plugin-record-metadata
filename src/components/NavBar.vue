@@ -39,7 +39,8 @@ export default {
         { id: "reports", label: "Queues/reports" },
         { id: "admin", label: "Admin" },
       ];
-      return all;
+      const views = (window.fsrmAccess || {}).views || [];
+      return all.filter((i) => views.includes(i.id));
     },
   },
 };

@@ -77,6 +77,9 @@ sub create_entry {
     my $body = $c->validation->param('body');
 
     return try {
+        my $plugin   = Koha::Plugin::Com::ByWaterSolutions::FSRecordMetadata->new;
+        return if _deny_unless_writable( $c, $plugin );
+
         my $biblio = Koha::Biblios->find( $body->{biblionumber} );
         unless ($biblio) {
             return $c->render(
@@ -85,7 +88,6 @@ sub create_entry {
             );
         }
 
-        my $plugin   = Koha::Plugin::Com::ByWaterSolutions::FSRecordMetadata->new;
         my $entry_id = $plugin->create_entry($body);
 
         my $result = $plugin->search_entries( { entry_id => $entry_id } );
@@ -107,6 +109,8 @@ sub create_entries {
 
     return try {
         my $plugin  = Koha::Plugin::Com::ByWaterSolutions::FSRecordMetadata->new;
+        return if _deny_unless_writable( $c, $plugin );
+
         my $results = $plugin->create_entries({
             items  => $body->{items},
             shared => {
@@ -155,6 +159,7 @@ sub update_entry {
 
     return try {
         my $plugin   = Koha::Plugin::Com::ByWaterSolutions::FSRecordMetadata->new;
+        return if _deny_unless_writable( $c, $plugin );
         my $existing = $plugin->search_entries( { entry_id => $entry_id } );
 
         unless ( $existing->{total} ) {
@@ -205,6 +210,7 @@ sub create_problem {
 
     return try {
         my $plugin = Koha::Plugin::Com::ByWaterSolutions::FSRecordMetadata->new;
+        return if _deny_unless_writable( $c, $plugin );
 
         my $entry = $plugin->search_entries( { entry_id => $body->{entry_id} } );
         unless ( $entry->{total} ) {
@@ -229,6 +235,8 @@ sub update_problem {
 
     return try {
         my $plugin   = Koha::Plugin::Com::ByWaterSolutions::FSRecordMetadata->new;
+        return if _deny_unless_writable( $c, $plugin );
+
         my $existing = $plugin->search_problems( { problem_id => $problem_id } );
 
         unless ( $existing->{total} ) {
@@ -276,6 +284,48 @@ sub check_dtn {
     catch {
         return $c->render( status => 500,
             openapi => { error => "Something went wrong: $_" } );
+    };
+}
+
+sub _deny_unless_writable {
+    my ( $c, $plugin ) = @_;
+
+    return 0 if $plugin->access_for_current_user->{can_write};
+
+    $c->render( status => 403, openapi => { error => "Read-only access" } );
+    return 1;
+}
+
+sub list_users {
+    my $c = shift->openapi->valid_input or return;
+
+    return try {
+        my $plugin = Koha::Plugin::Com::ByWaterSolutions::FSRecordMetadata->new;
+        return $c->render( status => 403, openapi => { error => "Not permitted" } )
+            unless $plugin->access_for_current_user->{is_admin};
+
+        return $c->render( status => 200, openapi => $plugin->list_users );
+    }
+    catch {
+        return $c->render( status => 500, openapi => { error => "Something went wrong: $_" } );
+    };
+}
+
+sub save_users {
+    my $c = shift->openapi->valid_input or return;
+
+    my $body = $c->validation->param('body');
+
+    return try {
+        my $plugin = Koha::Plugin::Com::ByWaterSolutions::FSRecordMetadata->new;
+        return $c->render( status => 403, openapi => { error => "Not permitted" } )
+            unless $plugin->access_for_current_user->{is_admin};
+
+        $plugin->save_users($body);
+        return $c->render( status => 200, openapi => { saved => \1 } );
+    }
+    catch {
+        return $c->render( status => 500, openapi => { error => "Something went wrong: $_" } );
     };
 }
 

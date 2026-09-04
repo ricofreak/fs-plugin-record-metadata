@@ -3,7 +3,7 @@
     :entry="entry"
     :field-keys="fieldKeys"
     :prev-step="1"
-    prev-step-label="Save and return to step 1"
+    prev-step-label="Save and return to scanning"
     @saved="$emit('saved', $event)"
     @step="$emit('step', $event)"
   >

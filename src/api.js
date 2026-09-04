@@ -81,4 +81,9 @@ export const updateProblem = (id, body) =>
 export const searchStaff = (q) =>
   apiFetch(`/staff?${qs({ q })}`).then((r) => r.json());
 
+export const getUsers = () => apiFetch("/users").then((r) => r.json());
+
+export const saveUsers = (body) =>
+  apiFetch("/users", { method: "PUT", body: JSON.stringify(body) }).then((r) => r.json());
+
 export { apiFetch, API_BASE };

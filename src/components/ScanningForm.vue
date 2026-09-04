@@ -57,24 +57,25 @@
       ></slot>
 
       <fieldset class="action">
+        <p v-if="!$canWrite()" class="hint">You have read-only access.</p>
         <div class="btn-toolbar">
           <button
-            v-if="prevStep"
+            v-if="prevStep && $canView(prevStepView)"
             class="btn btn-primary"
             type="button"
-            :disabled="saving"
+            :disabled="saving || !$canWrite()"
             @click="saveAndBack"
           >
             {{ saving ? "Saving…" : prevStepLabel }}
           </button>
-          <button class="btn btn-primary" :disabled="saving" @click="save">
+          <button class="btn btn-primary" :disabled="saving || !$canWrite()" @click="save">
             {{ saving ? "Saving…" : "Save" }}
           </button>
           <button
-            v-if="nextStep"
+            v-if="nextStep && $canView(prevStepView)"
             class="btn btn-primary"
             type="button"
-            :disabled="saving"
+            :disabled="saving || !$canWrite()"
             @click="saveAndGo"
           >
             {{ saving ? "Saving…" : nextStepLabel }}

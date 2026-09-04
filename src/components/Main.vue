@@ -19,6 +19,7 @@
       @cancel="closeEntry"
     />
     <ProblemsView v-if="view === 'problems'" />
+    <AdminView v-if="view === 'admin'" />
   </div>
 </template>
 
@@ -29,10 +30,11 @@ import BulkCreateView from "./BulkCreateView.vue";
 import ScanningViewOne from "./ScanningViewOne.vue";
 import ScanningViewTwo from "./ScanningViewTwo.vue";
 import ProblemsView from "./ProblemsView.vue";
+import AdminView from "./AdminView.vue";
 
 export default {
   name: "Main",
-  components: { SearchView, CreateView, BulkCreateView, ScanningViewOne, ScanningViewTwo, ProblemsView },
+  components: { SearchView, CreateView, BulkCreateView, ScanningViewOne, ScanningViewTwo, ProblemsView, AdminView },
   data() {
     return { view: "search", entry: null };
   },

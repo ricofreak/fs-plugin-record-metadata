@@ -3,7 +3,7 @@
     :entry="entry"
     :field-keys="fieldKeys"
     :next-step="2"
-    next-step-label="Save and continue to step 2"
+    next-step-label="Save and continue to processing"
     @saved="$emit('saved', $event)"
     @step="$emit('step', $event)"
   >

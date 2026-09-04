@@ -107,6 +107,17 @@ our %AV_FIELDS = (
     problem_type   => 'Problem type',
 );
 
+#define roles a user can have
+my %ROLES = (
+    admin      => { label => 'Admin',      views => [qw( search new bulknew create create2 problems reports admin )] },
+    metadata   => { label => 'Metadata',   views => [qw( search new bulknew create )] },
+    scanning   => { label => 'Scanning',   views => [qw( search create problems reports )] },
+    processing => { label => 'Processing', views => [qw( search create2 problems reports )] },
+    readonly   => { label => 'Read-only',  views => [qw( search create create2 problems reports )] },
+);
+
+my @READONLY_VIEWS = qw( search new bulknew create create2 problems reports );
+
 sub new {
     my ( $class, $args ) = @_;
 
@@ -122,6 +133,7 @@ sub install {
 
     my $entries_table  = $self->get_qualified_table_name('entries');
     my $problems_table = $self->get_qualified_table_name('problems');
+    my $users_table = $self->get_qualified_table_name('users');
 
     unless ( TableExists($entries_table) ) {
         $dbh->do("
@@ -231,6 +243,19 @@ sub install {
             ) ENGINE = INNODB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
         ");
     }
+    
+    unless ( TableExists($users_table) ) {
+        $dbh->do("
+            CREATE TABLE `$users_table` (
+                user_id        INT(11) NOT NULL AUTO_INCREMENT,
+                borrowernumber INT(11) NOT NULL,
+                role           VARCHAR(40) NOT NULL,
+                PRIMARY KEY (`user_id`),
+                UNIQUE KEY `borrower_role_uniq` (`borrowernumber`, `role`),
+                INDEX (`borrowernumber`)
+            ) ENGINE = INNODB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+        ");
+    }
 
     return 1;
 }
@@ -253,11 +278,11 @@ sub tool {
 
     my $template = $self->get_template({ file => 'tool.tt' });
     my $userenv = C4::Context->userenv;
-    warn 'CHECKING BORROWERNUMBER: ' . Data::Dumper::Dumper( $userenv->{number} );
     $template->param(
         current_user_id   => $userenv->{number},
         current_user_name => $userenv ? ( $userenv->{firstname} . ' ' . $userenv->{surname} ) : '',
         av_json => to_json( $self->authorised_values_for_fields ),
+        access_json => to_json( $self->access_for_current_user ),
     );
     $self->output_html( $template->output() );
 }
@@ -970,6 +995,84 @@ sub search_staff {
             }
         } $patrons->as_list
     ];
+}
+
+sub roles_for_borrower {
+    my ( $self, $borrowernumber ) = @_;
+    return [] unless $borrowernumber;
+
+    my $table = $self->get_qualified_table_name('users');
+    return C4::Context->dbh->selectcol_arrayref(
+        "SELECT role FROM `$table` WHERE borrowernumber = ?",
+        undef, $borrowernumber
+    );
+}
+
+sub access_for_current_user {
+    my ($self) = @_;
+
+    my $userenv = C4::Context->userenv;
+    return { roles => [], views => [], can_write => 0, is_admin => 0 } unless $userenv;
+
+    my $superlibrarian = haspermission( $userenv->{id}, { superlibrarian => 1 } ) ? 1 : 0;
+    my $roles          = $self->roles_for_borrower( $userenv->{number} );
+
+    my $is_admin = ( $superlibrarian || grep { $_ eq 'admin' } @$roles ) ? 1 : 0;
+
+    my %views;
+    if (@$roles) {
+        for my $role (@$roles) {
+            next unless $ROLES{$role};
+            $views{$_} = 1 for @{ $ROLES{$role}->{views} };
+        }
+    }
+    else {
+        $views{$_} = 1 for @READONLY_VIEWS;
+    }
+
+    $views{admin} = 1 if $is_admin;
+
+    my $can_write = ( grep { $_ ne 'readonly' && $ROLES{$_} } @$roles ) ? 1 : 0;
+
+    return {
+        roles     => $roles,
+        views     => [ sort keys %views ],
+        can_write => $can_write,
+        is_admin  => $is_admin,
+    };
+}
+
+sub list_users {
+    my ($self) = @_;
+
+    my $table = $self->get_qualified_table_name('users');
+    my $rows  = C4::Context->dbh->selectall_arrayref(
+        "SELECT borrowernumber, role FROM `$table` ORDER BY role, borrowernumber",
+        { Slice => {} }
+    );
+
+    my %by_role;
+    push @{ $by_role{ $_->{role} } }, $_->{borrowernumber} for @$rows;
+    return \%by_role;
+}
+
+sub save_users {
+    my ( $self, $params ) = @_;
+
+    my $table = $self->get_qualified_table_name('users');
+    my $dbh   = C4::Context->dbh;
+
+    $dbh->do("DELETE FROM `$table`");
+
+    my $sth = $dbh->prepare("INSERT IGNORE INTO `$table` ( borrowernumber, role ) VALUES ( ?, ? )");
+    for my $role ( keys %ROLES ) {
+        for my $bn ( @{ $params->{$role} || [] } ) {
+            next unless $bn =~ /^\d+$/;
+            $sth->execute( $bn, $role );
+        }
+    }
+
+    return 1;
 }
 
 sub static_routes {

@@ -451,5 +451,50 @@
                 "permissions": { "borrowers": "list_borrowers" }
             }
         }
+    },
+    "/users": {
+        "get": {
+            "x-mojo-to": "Com::ByWaterSolutions::FSRecordMetadata::Controller#list_users",
+            "operationId": "fsrmListUsers",
+            "tags": ["fsrecordmetadata"],
+            "produces": ["application/json"],
+            "responses": {
+                "200": { "description": "Users by role", "schema": { "type": "object" } },
+                "403": { "description": "Not permitted", "schema": { "type": "object", "properties": { "error": { "type": "string" } } } },
+                "500": { "description": "Internal server error", "schema": { "type": "object", "properties": { "error": { "type": "string" } } } }
+            },
+            "x-koha-authorization": { "permissions": { "catalogue": "1" } }
+        },
+        "put": {
+            "x-mojo-to": "Com::ByWaterSolutions::FSRecordMetadata::Controller#save_users",
+            "operationId": "fsrmSaveUsers",
+            "tags": ["fsrecordmetadata"],
+            "consumes": ["application/json"],
+            "produces": ["application/json"],
+            "parameters": [
+                {
+                    "name": "body",
+                    "in": "body",
+                    "required": true,
+                    "schema": {
+                        "type": "object",
+                        "properties": {
+                            "admin":      { "type": "array", "items": { "type": "string" } },
+                            "metadata":   { "type": "array", "items": { "type": "string" } },
+                            "scanning":   { "type": "array", "items": { "type": "string" } },
+                            "processing": { "type": "array", "items": { "type": "string" } },
+                            "readonly": { "type": "array", "items": { "type": "string" } }
+                        },
+                        "additionalProperties": false
+                    }
+                }
+            ],
+            "responses": {
+                "200": { "description": "Saved", "schema": { "type": "object" } },
+                "403": { "description": "Not permitted", "schema": { "type": "object", "properties": { "error": { "type": "string" } } } },
+                "500": { "description": "Internal server error", "schema": { "type": "object", "properties": { "error": { "type": "string" } } } }
+            },
+            "x-koha-authorization": { "permissions": { "catalogue": "1" } }
+        }
     }
 }

@@ -17,4 +17,7 @@ app.component("AvSelect", AvSelect);
 app.component("AccessLevel", AccessLevel);
 app.component("RecordDetails", RecordDetails);
 
+app.config.globalProperties.$canWrite = () => !!(window.fsrmAccess || {}).can_write;
+app.config.globalProperties.$canView = (id) => ((window.fsrmAccess || {}).views || []).includes(id);
+
 app.mount("#__app");

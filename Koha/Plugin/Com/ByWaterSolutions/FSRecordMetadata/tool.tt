@@ -31,7 +31,8 @@
     borrowernumber: [% current_user_id %],
     name: "[% current_user_name | html %]"
   };
-    window.fsrmAuthorisedValues = [% av_json | $raw %];
+  window.fsrmAuthorisedValues = [% av_json | $raw %];
+  window.fsrmAccess = [% access_json | $raw %];
 </script>
 <script src="/api/v1/contrib/fsrecordmetadata/static/dist/fsrecordmetadata.js"></script>
 [% INCLUDE 'intranet-bottom.inc' %]
