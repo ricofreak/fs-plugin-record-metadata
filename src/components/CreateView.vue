@@ -28,6 +28,10 @@
               <span class="label">Publisher Date:</span>
               {{ record.publication_date }}
             </li>
+            <li>
+              <span class="label">Language:</span>
+              {{ record.lang }}
+            </li>
           </ol>
           <table
             class="table table-success table-responsive"

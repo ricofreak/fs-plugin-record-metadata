@@ -818,6 +818,23 @@ sub get_record_details {
         };
     }
 
+    #get the language either from the 008, or the 041$a
+    my $lang = '';
+
+    if ( my $f008 = $record->field('008') ) {
+        my $data = $f008->data // '';
+        $lang = substr( $data, 35, 3 ) if length($data) >= 38;
+    }
+
+    unless ( length $lang ) {
+        for my $field ( $record->field('041') ) {
+            my $a = $field->subfield('a');
+            next unless defined $a && length $a;
+            $lang = $a;
+            last;
+        }
+    }
+
     my $access_control = $self->_access_control($biblio);
 
     return {
@@ -826,6 +843,7 @@ sub get_record_details {
         title            => $title,
         author           => $author,
         publication_date => $pub_date,
+        lang             => $lang,
         online_links     => \@online_links,
         items            => [
             map {
