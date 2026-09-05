@@ -10,6 +10,9 @@ use C4::Auth   qw( haspermission );
 
 use Koha::AuthorisedValueCategories;
 
+use Koha::Plugin::Com::ByWaterSolutions::FSRecordMetadata::AccessLevel
+    qw( resolve_access_level access_control_fields );
+
 our $VERSION = "0.0.1";
 
 our $metadata = {
@@ -416,7 +419,10 @@ sub create_entry {
     my $dbh   = C4::Context->dbh;
 
     my $biblio   = Koha::Biblios->find( $params->{biblionumber} );
-    my $resolved = $self->resolve_access_level({ biblio => $biblio });
+
+    #compute and store the access level for MARC 
+    my $resolved = resolve_access_level({ biblio => $biblio });
+
     $params->{access}        = $resolved->{value};
     $params->{access_source} = $resolved->{source};
 
@@ -590,7 +596,7 @@ sub preview_entries {
         $result->{title}        = $biblio->title;
         $result->{author}       = $biblio->author;
 
-        my $resolved = $self->resolve_access_level({ biblio => $biblio });
+        my $resolved = resolve_access_level({ biblio => $biblio });
         $result->{access} = $resolved->{value};
 
         if ( $seen{$biblionumber}++ ) {
@@ -610,7 +616,7 @@ sub preview_entries {
             next;
         }
 
-        my $rights = $self->_access_control($biblio);
+        my $rights = access_control_fields($biblio);
         $result->{$_} = $rights->{$_} for keys %$rights;
 
         $result->{status}     = 'ready';
@@ -860,7 +866,7 @@ sub get_record_details {
         }
     }
 
-    my $access_control = $self->_access_control($biblio);
+    my $access_control = access_control_fields($biblio);
 
     return {
         biblionumber     => $biblio->biblionumber,
@@ -884,81 +890,6 @@ sub get_record_details {
         ],
         %$access_control,
     };
-}
-
-sub resolve_access_level {
-    my ( $self, $args ) = @_;
-
-    my $biblio = $args->{biblio};
-    return { value => 'Undetermined', source => 'none' } unless $biblio;
-
-    my $record = eval { $biblio->metadata->record };
-    return { value => 'Undetermined', source => 'none' } unless $record;
-
-    # 1. Look at 998f first, if it exists check for term like ADULT CHILD DECEASED
-    for my $field ( $record->field('998') ) {
-        my $f = $field->subfield('f');
-        next unless defined $f && length $f;
-        return { value => 'Privacy Restricted', source => '998f' }
-            if $self->_is_term_in_998f($f);
-    }
-
-    #2. Now look for particular codes in the 542r 
-    for my $field ( $record->field('542') ) {
-        my $r = $field->subfield('r');
-        next unless defined $r && length $r;
-        my $access = $self->_access_from_contract_code($r);
-        return { value => $access, source => '542r' } if defined $access;
-    }
-
-    # 3. Now check the 506a text for  
-    for my $field ( $record->field('506') ) {
-        my $a = $field->subfield('a');
-        next unless defined $a && length $a;
-        my $access = $self->_access_from_section_108($a);
-        return { value => $access, source => '506a' } if defined $access;
-    }
-
-    #4 check the 542l 
-    for my $field ( $record->field('542') ) {
-        my $l = $field->subfield('l');
-        next unless defined $l && length $l;
-        my $access = $self->_access_from_copyright_status($l);
-        return { value => $access, source => '542l' } if defined $access;
-    }
-
-    # 5. Set to UNDETERMINED 
-    return { value => 'Undetermined', source => 'none' };
-}
-
-our %ACCESS_CONTROL_FIELDS = (
-    privacy_998f   => [ '998', 'f' ],
-    contract_542r  => [ '542', 'r' ],
-    ex_108         => [ '506', 'a' ],
-    copyright_542l => [ '542', 'l' ],
-);
-
-sub _access_control {
-    my ( $self, $biblio ) = @_;
-
-    my %out = map { $_ => '' } keys %ACCESS_CONTROL_FIELDS;
-    return \%out unless $biblio;
-
-    my $record = eval { $biblio->metadata->record };
-    return \%out unless $record;
-
-    for my $key ( keys %ACCESS_CONTROL_FIELDS ) {
-        my ( $tag, $sub ) = @{ $ACCESS_CONTROL_FIELDS{$key} };
-        my @values;
-        for my $field ( $record->field($tag) ) {
-            for my $value ( $field->subfield($sub) ) {
-                push @values, $value if defined $value && length $value;
-            }
-        }
-        $out{$key} = join '; ', @values;
-    }
-
-    return \%out;
 }
 
 sub search_staff {
@@ -1152,102 +1083,6 @@ sub authorised_values_for_fields {
     }
 
     return \%out;
-}
-
-#match strings in 998f to certain terms defined here  
-sub _is_term_in_998f {
-    my ( $self, $value ) = @_;
-    return 0 unless defined $value && length $value;
-
-    my @terms = qw( ADULT CHILD DECEASED );
-    for my $term (@terms) {
-        return 1 if $value =~ /\b\Q$term\E\b/i;
-    }
-    return 0;
-}
-
-our @CONTRACT_CODE_RULES = (
-    { j => 'J9', k => [],               access => 'Denied' },
-    { j => 'J1', k => [ 'K2a', 'K2q' ], access => 'FSL Purchase' },
-    { j => 'J1', k => [ 'K2a', 'K6'  ], access => 'Purchase' },
-    { j => 'J1', k => [ 'K1'  ],        access => 'Public' },
-    { j => 'J1', k => [ 'K3'  ],        access => 'Full Permission' },
-    { j => 'J1', k => [ 'K3a' ],        access => 'Limited Permission' },
-    { j => 'J1', k => [ 'K2j' ],        access => 'Protected' },
-    { j => 'J1', k => [ 'K2a' ],        access => 'Logged in Permission' },
-    { j => 'J1', k => [ 'K2h' ],        access => 'Denied' },
-);
-
-sub _access_from_contract_code {
-    my ( $self, $value ) = @_;
-    return undef unless defined $value && length $value;
-    
-    #splitting each set in to it's own token for examining 
-    my @tokens = split /\s+/, $value;
-    
-    #looking at the contracts containing 'J', if we don't have this we move on 
-    my ($j) = grep { /^J\d+[a-z]*$/i } @tokens;
-    return undef unless $j;
-
-    #find 'K' contracts, and match them 
-    my @k = grep { /^K\d+[a-z]*$/i } @tokens;
-    
-    #CONTRACT_CODE_RULES defined by our @CONTRACT_CODE_RULES
-    for my $rule (@CONTRACT_CODE_RULES) {
-        next unless uc($j) eq uc( $rule->{j} );
-
-        my @want = @{ $rule->{k} };
-        next unless scalar(@k) == scalar(@want);
-
-        my %have = map { uc($_) => 1 } @k;
-        my $matched = 1;
-        for my $code (@want) {
-            unless ( $have{ uc($code) } ) { $matched = 0; last }
-        }
-
-        return $rule->{access} if $matched;
-    }
-
-    #if we return undef, its time to  move on, time to get going, what lies ahead we have no way of knowing  
-    return undef;
-}
-
-my @SECTION_108_RULES = (
-    { subsection => 'h', access => '108h Exception' },
-    { subsection => 'c', access => '108c Exception' },
-);
-
-sub _access_from_section_108 {
-    my ( $self, $value ) = @_;
-    return undef unless defined $value && length $value;
-    
-    #look at the 506a for either 108h or 108c in the text, if so match 
-    #SECTION_108_RULES defined by my @SECTION_108_RULES
-    for my $rule (@SECTION_108_RULES) {
-        return $rule->{access}
-            if $value =~ /108\s*\(\s*\Q$rule->{subsection}\E\s*\)/i;
-    }
-
-    #if we return undef, its time to  move on, time to get going
-    return undef;
-}
-
-my %COPYRIGHT_STATUS_ACCESS = (
-    PD => 'Public',
-    IC => 'Protected',
-);
-
-sub _access_from_copyright_status {
-    my ( $self, $value ) = @_;
-    return undef unless defined $value && length $value;
-
-    my ($token) = split /\s+/, $value;
-    return undef unless defined $token;
-
-    my ($prefix) = $token =~ /^(PD|IC)\b/i;
-    return undef unless $prefix;
-
-    return $COPYRIGHT_STATUS_ACCESS{ uc($prefix) };
 }
 
 sub _inject_body_properties {
