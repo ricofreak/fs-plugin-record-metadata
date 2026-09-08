@@ -31,6 +31,7 @@ use Koha::Plugin::Com::ByWaterSolutions::FSRecordMetadata::AccessLevel
     qw( resolve_access_level access_control_fields );
 
 use Koha::Plugin::Com::ByWaterSolutions::FSRecordMetadata::UserRoles ();
+use Koha::Plugin::Com::ByWaterSolutions::FSRecordMetadata::Entries ();
 
 our $VERSION = "0.0.1";
 
@@ -339,328 +340,32 @@ sub configure {
 
 sub search_entries {
     my ( $self, $filters, $opts ) = @_;
-    $opts //= {};
-
-    my $page     = $opts->{page}     || 1;
-    my $per_page = $opts->{per_page} || 50;
-    $per_page = 100 if $per_page > 100;
-    $page     = 1   if $page < 1;
-
-    my $table = $self->get_qualified_table_name('entries');
-    my $problems_table = $self->get_qualified_table_name('problems');
-    my $dbh   = C4::Context->dbh;
-
-    my %columns = (
-        entry_id     => 'e.entry_id',
-        biblionumber => 'e.biblionumber',
-        dtn          => 'e.dtn',
-    );
-
-    my ( @where, @binds );
-    for my $key ( keys %columns ) {
-        next unless defined $filters->{$key};
-        push @where, "$columns{$key} = ?";
-        push @binds, $filters->{$key};
-    }
-
-    if ( defined $filters->{barcode} ) {
-        push @where,
-            'e.biblionumber IN (SELECT i.biblionumber FROM items i WHERE i.barcode = ?)';
-        push @binds, $filters->{barcode};
-    }
-
-    my $where = @where ? 'WHERE ' . join( ' AND ', @where ) : '';
-
-    my $from = qq{
-        FROM `$table` e
-        JOIN biblio b ON b.biblionumber = e.biblionumber
-        $where
-    };
-
-    my ($total) = $dbh->selectrow_array( "SELECT COUNT(*) $from", undef, @binds );
-
-    my $offset = ( $page - 1 ) * $per_page;
-    my $rows = $dbh->selectall_arrayref(
-        qq{
-            SELECT e.*,
-                   b.title,
-                   b.author,
-                   e.md_date              IS NOT NULL AS md,
-                   e.audit_date_1         IS NOT NULL AS audit1,
-                   e.audit_date_2         IS NOT NULL AS audit2,
-                   e.ocr_date             IS NOT NULL AS ocr,
-                   e.pdf_loaded_date      IS NOT NULL AS published,
-                   e.review_complete_date IS NOT NULL AS online_review,
-                   IF(e.itemnumber IS NULL,
-                      (SELECT GROUP_CONCAT(i.barcode ORDER BY i.barcode SEPARATOR ', ')
-                       FROM items i WHERE i.biblionumber = e.biblionumber),
-                      (SELECT i.barcode FROM items i WHERE i.itemnumber = e.itemnumber)
-                   ) AS barcodes,
-                   IF(e.itemnumber IS NULL,
-                      (SELECT GROUP_CONCAT(DISTINCT i.itemcallnumber SEPARATOR ', ')
-                       FROM items i WHERE i.biblionumber = e.biblionumber),
-                      (SELECT i.itemcallnumber FROM items i WHERE i.itemnumber = e.itemnumber)
-                   ) AS callnumbers,
-                   IF(e.itemnumber IS NULL,
-                      (SELECT GROUP_CONCAT(DISTINCT i.itype SEPARATOR ', ')
-                       FROM items i WHERE i.biblionumber = e.biblionumber),
-                      (SELECT i.itype FROM items i WHERE i.itemnumber = e.itemnumber)
-                   ) AS itypes,
-                   (SELECT GROUP_CONCAT(
-                        CONCAT(p.problem_id, ':', IF(p.solution_date IS NULL, '1', '0'))
-                        ORDER BY p.problem_id SEPARATOR ',')
-                    FROM `$problems_table` p
-                    WHERE p.entry_id = e.entry_id) AS problem_numbers
-            $from
-            ORDER BY e.entry_id DESC
-            LIMIT ? OFFSET ?
-        },
-        { Slice => {} },
-        @binds, $per_page, $offset
-    );
-
-    return { entries => $rows, total => $total };
+    return Koha::Plugin::Com::ByWaterSolutions::FSRecordMetadata::Entries::search_entries(
+        $self->_tables, $filters, $opts );
 }
 
 sub create_entry {
     my ( $self, $params ) = @_;
-
-    my $table = $self->get_qualified_table_name('entries');
-    my $dbh   = C4::Context->dbh;
-
-    my $biblio   = Koha::Biblios->find( $params->{biblionumber} );
-
-    #compute and store the access level for MARC 
-    my $resolved = resolve_access_level({ biblio => $biblio });
-
-    $params->{access}        = $resolved->{value};
-    $params->{access_source} = $resolved->{source};
-
-    my $userenv = C4::Context->userenv;
-    my $user_id = $userenv ? $userenv->{number} : undef;
-
-    my @cols = ( keys %CREATE_ONLY_COLUMNS, keys %ENTRY_COLUMNS );
-
-    my ( @names, @placeholders, @binds );
-    for my $col (@cols) {
-        next unless exists $params->{$col};
-        push @names,        $col;
-        push @placeholders, '?';
-        push @binds,        $params->{$col};
-    }
-
-    for my $col (qw( access access_source )) {
-        push @names,        $col;
-        push @placeholders, '?';
-        push @binds,        $params->{$col};
-    }
-
-    push @names, 'created_user', 'updated_user';
-    push @placeholders, '?', '?';
-    push @binds, $user_id, $user_id;
-
-    my $sql = sprintf(
-        "INSERT INTO `%s` (%s) VALUES (%s)",
-        $table, join( ', ', @names ), join( ', ', @placeholders )
-    );
-
-    $dbh->do( $sql, undef, @binds );
-
-    return $dbh->last_insert_id( undef, undef, $table, undef );
-}
-
-sub create_entries {
-    my ( $self, $params ) = @_;
-
-    my $shared = $params->{shared} // {};
-    my @results;
-    my %seen;
-
-    for my $item ( @{ $params->{items} || [] } ) {
-        my $value = $item->{value};
-        my $type  = $item->{type} // 'biblionumber';
-        my $itemnumber = $item->{itemnumber};
-
-        my $result = { input => $value, type => $type };
-
-        my $biblio;
-        if ( $type eq 'barcode' ) {
-            my $koha_item = Koha::Items->find( { barcode => $value } );
-            if ($koha_item) {
-                $biblio = $koha_item->biblio;
-                $itemnumber = $koha_item->itemnumber;
-                $result->{itemnumber} = $itemnumber;
-            }
-            else {
-                $result->{status}  = 'not_found';
-                $result->{message} = 'No item with that barcode';
-                push @results, $result;
-                next;
-            }
-        }
-        else {
-            $biblio = Koha::Biblios->find($value);
-        }
-
-        unless ($biblio) {
-            $result->{status}  = 'not_found';
-            $result->{message} = 'No record found';
-            push @results, $result;
-            next;
-        }
-
-        my $biblionumber = $biblio->biblionumber;
-        $result->{biblionumber} = $biblionumber;
-
-        if ( $seen{$biblionumber}++ ) {
-            $result->{status}  = 'duplicate';
-            $result->{message} = 'Repeated in this batch';
-            push @results, $result;
-            next;
-        }
-
-        my $dtn = $biblionumber;
-        $result->{dtn} = $dtn;
-
-        my $existing = $self->search_entries( { dtn => $dtn } );
-        if ( $existing->{total} ) {
-            $result->{status}  = 'dtn_taken';
-            $result->{message} = "An entry with DTN $dtn already exists";
-            push @results, $result;
-            next;
-        }
-
-        my $entry_id = eval {
-            $self->create_entry({
-                biblionumber       => $biblionumber,
-                itemnumber         => $itemnumber,
-                dtn                => $dtn,
-                owning_institution => $shared->{owning_institution},
-                scan_site          => $shared->{scan_site},
-            });
-        };
-
-        if ($@) {
-            my $err = $@;
-            $err =~ s/\s+at\s+\S+\s+line\s+\d+\.?\s*$//;
-            $result->{status}  = 'error';
-            $result->{message} = $err;
-        }
-        else {
-            $result->{status}   = 'created';
-            $result->{entry_id} = $entry_id;
-        }
-
-        push @results, $result;
-    }
-
-    return \@results;
-}
-
-sub preview_entries {
-    my ( $self, $params ) = @_;
-
-    my @results;
-    my %seen;
-
-    for my $item ( @{ $params->{items} || [] } ) {
-        my $value = $item->{value};
-        my $type  = $item->{type} // 'biblionumber';
-        my $itemnumber = $item->{itemnumber};
-
-        my $result = { input => $value, type => $type };
-
-        my $biblio;
-        if ( $type eq 'barcode' ) {
-            my $koha_item = Koha::Items->find( { barcode => $value } );
-            if ( $koha_item ) { 
-                $biblio = $koha_item->biblio;
-                $itemnumber = $koha_item->itemnumber;
-                $result->{itemnumber} = $koha_item->itemnumber;
-            }
-            else {
-                $result->{status}     = 'not_found';
-                $result->{message}    = 'No item with that barcode';
-                $result->{selectable} = \0;
-                push @results, $result;
-                next;
-            }
-        }
-        else {
-            $biblio = Koha::Biblios->find($value);
-        }
-
-        unless ($biblio) {
-            $result->{status}     = 'not_found';
-            $result->{message}    = 'No record found';
-            $result->{selectable} = \0;
-            push @results, $result;
-            next;
-        }
-
-        my $biblionumber = $biblio->biblionumber;
-        my $dtn          = $biblionumber;
-
-        $result->{biblionumber} = $biblionumber;
-        $result->{dtn}          = $dtn;
-        $result->{title}        = $biblio->title;
-        $result->{author}       = $biblio->author;
-
-        my $resolved = resolve_access_level({ biblio => $biblio });
-        $result->{access} = $resolved->{value};
-
-        if ( $seen{$biblionumber}++ ) {
-            $result->{status}     = 'duplicate';
-            $result->{message}    = 'Repeated in this batch';
-            $result->{selectable} = \0;
-            push @results, $result;
-            next;
-        }
-
-        my $existing = $self->search_entries( { dtn => $dtn } );
-        if ( $existing->{total} ) {
-            $result->{status}     = 'dtn_taken';
-            $result->{message}    = "An entry with DTN $dtn already exists";
-            $result->{selectable} = \0;
-            push @results, $result;
-            next;
-        }
-
-        my $rights = access_control_fields($biblio);
-        $result->{$_} = $rights->{$_} for keys %$rights;
-
-        $result->{status}     = 'ready';
-        $result->{selectable} = \1;
-        push @results, $result;
-    }
-
-    return \@results;
+    return Koha::Plugin::Com::ByWaterSolutions::FSRecordMetadata::Entries::create_entry(
+        $self->_tables, $params );
 }
 
 sub update_entry {
     my ( $self, $entry_id, $params ) = @_;
+    return Koha::Plugin::Com::ByWaterSolutions::FSRecordMetadata::Entries::update_entry(
+        $self->_tables, $entry_id, $params );
+}
 
-    my $table = $self->get_qualified_table_name('entries');
-    my $dbh   = C4::Context->dbh;
+sub create_entries {
+    my ( $self, $params ) = @_;
+    return Koha::Plugin::Com::ByWaterSolutions::FSRecordMetadata::Entries::create_entries(
+        $self->_tables, $params );
+}
 
-    my $userenv = C4::Context->userenv;
-    my $user_id = $userenv ? $userenv->{number} : undef;
-
-    my ( @sets, @binds );
-    for my $col ( keys %ENTRY_COLUMNS ) {
-        next unless exists $params->{$col};
-        push @sets,  "$col = ?";
-        push @binds, $params->{$col};
-    }
-
-    return 0 unless @sets;
-
-    push @sets,  'updated_user = ?';
-    push @binds, $user_id;
-
-    my $sql = sprintf( "UPDATE `%s` SET %s WHERE entry_id = ?", $table, join( ', ', @sets ) );
-
-    return $dbh->do( $sql, undef, @binds, $entry_id );
+sub preview_entries {
+    my ( $self, $params ) = @_;
+    return Koha::Plugin::Com::ByWaterSolutions::FSRecordMetadata::Entries::preview_entries(
+        $self->_tables, $params );
 }
 
 sub search_problems {
@@ -957,18 +662,20 @@ sub api_routes {
 
     my $spec = decode_json( $self->mbf_read('openapi.json') );
 
+    my $entry_cols  = Koha::Plugin::Com::ByWaterSolutions::FSRecordMetadata::Entries::entry_columns();
+    my $create_cols = Koha::Plugin::Com::ByWaterSolutions::FSRecordMetadata::Entries::create_only_columns();
+
     my %create_props;
     my %update_props;
 
-    for my $col ( keys %ENTRY_COLUMNS ) {
-        my $type = $ENTRY_COLUMNS{$col};
-        my $prop = { type => [ $type, 'null' ] };
+    for my $col ( keys %$entry_cols ) {
+        my $prop = { type => [ $entry_cols->{$col}, 'null' ] };
         $create_props{$col} = $prop;
         $update_props{$col} = { %$prop };
     }
 
-    for my $col ( keys %CREATE_ONLY_COLUMNS ) {
-        $create_props{$col} = { type => [ $CREATE_ONLY_COLUMNS{$col}, 'null' ] };
+    for my $col ( keys %$create_cols ) {
+        $create_props{$col} = { type => [ $create_cols->{$col}, 'null' ] };
     }
 
     $create_props{biblionumber} = { type => 'integer' };
@@ -1046,4 +753,13 @@ sub _inject_body_properties {
         $param->{schema}{properties} = $props;
         return;
     }
+}
+
+sub _tables {
+    my ($self) = @_;
+    return {
+        entries  => $self->get_qualified_table_name('entries'),
+        problems => $self->get_qualified_table_name('problems'),
+        users    => $self->get_qualified_table_name('users'),
+    };
 }
