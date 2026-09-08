@@ -1,0 +1,8 @@
+use Modern::Perl;
+use Test::More tests => 5;
+
+use_ok('Koha::Plugin::Com::ByWaterSolutions::FSRecordMetadata');
+use_ok('Koha::Plugin::Com::ByWaterSolutions::FSRecordMetadata::AccessLevel');
+use_ok('Koha::Plugin::Com::ByWaterSolutions::FSRecordMetadata::UserRoles');
+use_ok('Koha::Plugin::Com::ByWaterSolutions::FSRecordMetadata::Entries');
+use_ok('Koha::Plugin::Com::ByWaterSolutions::FSRecordMetadata::Problems');
