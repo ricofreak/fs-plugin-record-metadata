@@ -30,6 +30,8 @@ use Koha::AuthorisedValueCategories;
 use Koha::Plugin::Com::ByWaterSolutions::FSRecordMetadata::AccessLevel
     qw( resolve_access_level access_control_fields );
 
+use Koha::Plugin::Com::ByWaterSolutions::FSRecordMetadata::UserRoles ();
+
 our $VERSION = "0.0.1";
 
 our $metadata = {
@@ -125,15 +127,6 @@ our %AV_FIELDS = (
     ocr_site           => 'OCR site',
     problem_status => 'Problem status',
     problem_type   => 'Problem type',
-);
-
-#define roles a user can have
-my %ROLES = (
-    admin      => { label => 'Admin',      views => [qw( search new bulknew create create2 problems reports admin )] },
-    metadata   => { label => 'Metadata',   views => [qw( search new bulknew create )] },
-    scanning   => { label => 'Scanning',   views => [qw( search create problems reports )] },
-    processing => { label => 'Processing', views => [qw( search create2 problems reports )] },
-    readonly   => { label => 'Read-only',  views => [qw( search create create2 problems reports )] },
 );
 
 my @READONLY_VIEWS = qw( search new bulknew create create2 problems reports );
@@ -945,84 +938,6 @@ sub search_staff {
     ];
 }
 
-sub roles_for_borrower {
-    my ( $self, $borrowernumber ) = @_;
-    return [] unless $borrowernumber;
-
-    my $table = $self->get_qualified_table_name('users');
-    return C4::Context->dbh->selectcol_arrayref(
-        "SELECT role FROM `$table` WHERE borrowernumber = ?",
-        undef, $borrowernumber
-    );
-}
-
-sub access_for_current_user {
-    my ($self) = @_;
-
-    my $userenv = C4::Context->userenv;
-    return { roles => [], views => [], can_write => 0, is_admin => 0 } unless $userenv;
-
-    my $superlibrarian = haspermission( $userenv->{id}, { superlibrarian => 1 } ) ? 1 : 0;
-    my $roles          = $self->roles_for_borrower( $userenv->{number} );
-
-    my $is_admin = ( $superlibrarian || grep { $_ eq 'admin' } @$roles ) ? 1 : 0;
-
-    my %views;
-    if (@$roles) {
-        for my $role (@$roles) {
-            next unless $ROLES{$role};
-            $views{$_} = 1 for @{ $ROLES{$role}->{views} };
-        }
-    }
-    else {
-        $views{$_} = 1 for @READONLY_VIEWS;
-    }
-
-    $views{admin} = 1 if $is_admin;
-
-    my $can_write = ( grep { $_ ne 'readonly' && $ROLES{$_} } @$roles ) ? 1 : 0;
-
-    return {
-        roles     => $roles,
-        views     => [ sort keys %views ],
-        can_write => $can_write,
-        is_admin  => $is_admin,
-    };
-}
-
-sub list_users {
-    my ($self) = @_;
-
-    my $table = $self->get_qualified_table_name('users');
-    my $rows  = C4::Context->dbh->selectall_arrayref(
-        "SELECT borrowernumber, role FROM `$table` ORDER BY role, borrowernumber",
-        { Slice => {} }
-    );
-
-    my %by_role;
-    push @{ $by_role{ $_->{role} } }, $_->{borrowernumber} for @$rows;
-    return \%by_role;
-}
-
-sub save_users {
-    my ( $self, $params ) = @_;
-
-    my $table = $self->get_qualified_table_name('users');
-    my $dbh   = C4::Context->dbh;
-
-    $dbh->do("DELETE FROM `$table`");
-
-    my $sth = $dbh->prepare("INSERT IGNORE INTO `$table` ( borrowernumber, role ) VALUES ( ?, ? )");
-    for my $role ( keys %ROLES ) {
-        for my $bn ( @{ $params->{$role} || [] } ) {
-            next unless $bn =~ /^\d+$/;
-            $sth->execute( $bn, $role );
-        }
-    }
-
-    return 1;
-}
-
 sub static_routes {
     my ( $self, $args ) = @_;
 
@@ -1100,6 +1015,25 @@ sub authorised_values_for_fields {
     }
 
     return \%out;
+}
+
+#when determing user roles, listing those user, or saving users we must know what the table name is called 
+sub access_for_current_user {
+    my ($self) = @_;
+    return Koha::Plugin::Com::ByWaterSolutions::FSRecordMetadata::UserRoles::user_access(
+        $self->get_qualified_table_name('users') );
+}
+
+sub list_users {
+    my ($self) = @_;
+    return Koha::Plugin::Com::ByWaterSolutions::FSRecordMetadata::UserRoles::list_users(
+        $self->get_qualified_table_name('users') );
+}
+
+sub save_users {
+    my ( $self, $params ) = @_;
+    return Koha::Plugin::Com::ByWaterSolutions::FSRecordMetadata::UserRoles::save_users(
+        $self->get_qualified_table_name('users'), $params );
 }
 
 sub _inject_body_properties {
