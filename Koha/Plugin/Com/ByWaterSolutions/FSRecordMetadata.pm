@@ -265,6 +265,7 @@ sub configure {
     }
 }
 
+#ENTRIES
 sub search_entries {
     my ( $self, $filters, $opts ) = @_;
     return Koha::Plugin::Com::ByWaterSolutions::FSRecordMetadata::Entries::search_entries(
@@ -295,6 +296,7 @@ sub preview_entries {
         $self->_tables, $params );
 }
 
+#PROBLEMS
 sub search_problems {
     my ( $self, $filters, $opts ) = @_;
     return Koha::Plugin::Com::ByWaterSolutions::FSRecordMetadata::Problems::search_problems(
@@ -313,6 +315,27 @@ sub update_problem {
         $self->_tables, $problem_id, $params );
 }
 
+#when determing user roles, listing those user, or saving users we must know what the table name is called 
+sub access_for_current_user {
+    my ($self) = @_;
+    return Koha::Plugin::Com::ByWaterSolutions::FSRecordMetadata::UserRoles::user_access(
+        $self->get_qualified_table_name('users') );
+}
+
+sub list_users {
+    my ($self) = @_;
+    return Koha::Plugin::Com::ByWaterSolutions::FSRecordMetadata::UserRoles::list_users(
+        $self->get_qualified_table_name('users') );
+}
+
+sub save_users {
+    my ( $self, $params ) = @_;
+    return Koha::Plugin::Com::ByWaterSolutions::FSRecordMetadata::UserRoles::save_users(
+        $self->get_qualified_table_name('users'), $params );
+}
+
+#when adding an entry we need to know a lot about 
+# that particular MARC record, this helps get that info. 
 sub get_record_details {
     my ( $self, $params ) = @_;
 
@@ -406,6 +429,7 @@ sub get_record_details {
     };
 }
 
+#this helps us when searching for staff to assign to certain things 
 sub search_staff {
     my ( $self, $params ) = @_;
 
@@ -442,6 +466,34 @@ sub search_staff {
     ];
 }
 
+#helps us get AV categories for certain entries and problems 
+sub av_category_for {
+    my ( $self, $field ) = @_;
+
+    my $category = $self->retrieve_data("av_category_$field");
+    return ( defined $category && length $category ) ? $category : undef;
+}
+
+sub authorised_values_for_fields {
+    my ($self) = @_;
+
+    my %out;
+    for my $field ( keys %AV_FIELDS ) {
+        my $category = $self->av_category_for($field);
+        next unless $category;
+
+        $out{$field} = [
+            map { { value => $_->authorised_value, label => $_->lib } }
+                Koha::AuthorisedValues->search(
+                    { category => $category },
+                    { order_by => 'lib' }
+                )->as_list
+        ];
+    }
+
+    return \%out;
+}
+
 sub static_routes {
     my ( $self, $args ) = @_;
 
@@ -463,7 +515,6 @@ sub api_routes {
 
     my $entry_cols  = Koha::Plugin::Com::ByWaterSolutions::FSRecordMetadata::Entries::entry_columns();
     my $create_cols = Koha::Plugin::Com::ByWaterSolutions::FSRecordMetadata::Entries::create_only_columns();
-
     my $problem_cols = Koha::Plugin::Com::ByWaterSolutions::FSRecordMetadata::Problems::problem_columns();
 
     my %create_props;
@@ -498,52 +549,8 @@ sub api_routes {
     return $spec;
 }
 
-sub av_category_for {
-    my ( $self, $field ) = @_;
-
-    my $category = $self->retrieve_data("av_category_$field");
-    return ( defined $category && length $category ) ? $category : undef;
-}
-
-sub authorised_values_for_fields {
-    my ($self) = @_;
-
-    my %out;
-    for my $field ( keys %AV_FIELDS ) {
-        my $category = $self->av_category_for($field);
-        next unless $category;
-
-        $out{$field} = [
-            map { { value => $_->authorised_value, label => $_->lib } }
-                Koha::AuthorisedValues->search(
-                    { category => $category },
-                    { order_by => 'lib' }
-                )->as_list
-        ];
-    }
-
-    return \%out;
-}
-
-#when determing user roles, listing those user, or saving users we must know what the table name is called 
-sub access_for_current_user {
-    my ($self) = @_;
-    return Koha::Plugin::Com::ByWaterSolutions::FSRecordMetadata::UserRoles::user_access(
-        $self->get_qualified_table_name('users') );
-}
-
-sub list_users {
-    my ($self) = @_;
-    return Koha::Plugin::Com::ByWaterSolutions::FSRecordMetadata::UserRoles::list_users(
-        $self->get_qualified_table_name('users') );
-}
-
-sub save_users {
-    my ( $self, $params ) = @_;
-    return Koha::Plugin::Com::ByWaterSolutions::FSRecordMetadata::UserRoles::save_users(
-        $self->get_qualified_table_name('users'), $params );
-}
-
+#helper for injecting API properties 
+# Assisted by Claude Sonnet 
 sub _inject_body_properties {
     my ( $spec, $path, $method, $props ) = @_;
 
